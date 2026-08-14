@@ -1,0 +1,102 @@
+// The relational model this app is built against. NOT WIRED UP YET: there is no
+// Prisma dependency, no generated client and no migration in the repo — the app
+// runs entirely on the browser adapter in lib/data/browserRepository.ts.
+//
+// This file exists so the database shape is settled and reviewable now. Standing
+// it up later is:
+//   1. npm i -D prisma && npm i @prisma/client
+//   2. set DATABASE_URL, then npx prisma migrate dev --name init
+//   3. add lib/data/prismaRepository.ts implementing InspectionRepository
+//   4. select it in lib/data/index.ts
+// Photo bytes do not belong in Postgres — PhotoCapture.storageKey is an object
+// storage key (S3/Vercel Blob), the same field the browser adapter fills with an
+// IndexedDB key.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AssessmentStatus {
+  open
+  complete
+}
+
+enum TaskStatus {
+  pending
+  done
+  skipped
+}
+
+enum AnalysisVerdict {
+  accepted
+  follow_up
+}
+
+model Assessment {
+  id                 String           @id @default(uuid())
+  policyRef          String
+  homeAddress        String
+  homeownerFirstName String
+  status             AssessmentStatus @default(open)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  tasks    PhotoTask[]
+  captures PhotoCapture[]
+}
+
+model PhotoTask {
+  id           String     @id @default(uuid())
+  assessmentId String
+  slug         String
+  name         String
+  zone         String
+  // "Water", "Fire" or "Water & fire" — what the insurer is looking for here.
+  risk         String
+  instruction  String
+  tips         String[]
+  order        Int
+  status       TaskStatus @default(pending)
+  // Set once the reviewer has asked for a close-up of this task.
+  followUpPrompt String?
+
+  assessment Assessment     @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  captures   PhotoCapture[]
+
+  @@unique([assessmentId, slug])
+  @@index([assessmentId, order])
+}
+
+model PhotoCapture {
+  id           String   @id @default(uuid())
+  taskId       String
+  assessmentId String
+  mimeType     String
+  capturedAt   DateTime @default(now())
+  isFollowUp   Boolean  @default(false)
+  // Object storage key. Null only for the demo's stand-in capture.
+  storageKey   String?
+
+  task       PhotoTask     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  assessment Assessment    @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  analysis   PhotoAnalysis?
+
+  @@index([taskId, capturedAt])
+}
+
+model PhotoAnalysis {
+  id         String          @id @default(uuid())
+  captureId  String          @unique
+  verdict    AnalysisVerdict
+  message    String
+  // Which reviewer produced this — "mock" until the vision model is wired in.
+  model      String
+  analyzedAt DateTime        @default(now())
+
+  capture PhotoCapture @relation(fields: [captureId], references: [id], onDelete: Cascade)
+}

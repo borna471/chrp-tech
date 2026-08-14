@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+/* Chrp palette, carried over from the design file's token block. The Broadsheet
+   design system these screens were drawn against is a serif newsprint theme that
+   the design overrode wholesale, so only its button semantics survive here. */
+@theme {
+  --color-bg: #ffffff;
+  --color-surface: #eff8f8;
+  --color-ink: #0d3a4f;
+  --color-divider: rgba(13, 58, 79, 0.12);
+  --color-backdrop: #cfdde3;
+
+  --color-accent: #0d3a4f;
+  --color-accent-600: #124a63;
+  --color-accent-700: #0a2f40;
+  --color-accent-800: #082533;
+
+  --color-aqua: #62cdcc;
+  --color-aqua-200: #dff5f5;
+  --color-aqua-700: #0f7d80;
+
+  --color-steel-200: #eef2f4;
+  --color-steel-300: #dbe3e7;
+  --color-steel-400: #b6c4cb;
+  --color-steel-500: #8fa2ab;
+  --color-steel-600: #6d838d;
+  --color-steel-700: #4d6875;
+  --color-steel-800: #2a5468;
+
+  --font-sans: var(--font-poppins), system-ui, sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --animate-scan: scan 1.1s ease-in-out infinite alternate;
+  --animate-blink: blink 1s infinite;
+
+  @keyframes scan {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(260px);
+    }
+  }
+  @keyframes blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.25;
+    }
+  }
+}
+
+body {
+  background: var(--color-backdrop);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.02em;
+}
+
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--color-ink);
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--color-aqua-700);
+    outline-offset: 2px;
+  }
+  .btn-primary {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+  .btn-primary:hover {
+    background: var(--color-accent-600);
+  }
+  .btn-primary:active {
+    background: var(--color-accent-700);
+  }
+  .btn-secondary {
+    border-color: var(--color-divider);
+  }
+  .btn-secondary:hover {
+    background: color-mix(in srgb, var(--color-ink) 7%, transparent);
+  }
+  .btn-secondary:active {
+    background: color-mix(in srgb, var(--color-ink) 14%, transparent);
+  }
+  .btn-ghost {
+    color: var(--color-aqua-700);
+  }
+  .btn-ghost:hover {
+    background: color-mix(in srgb, var(--color-aqua) 18%, transparent);
+  }
+  .btn-ghost:active {
+    background: color-mix(in srgb, var(--color-aqua) 30%, transparent);
+  }
+  .btn-block {
+    width: 100%;
+  }
+}

@@ -1,0 +1,246 @@
+[
+  {
+    "slug": "vegetation-fire-exposure",
+    "name": "Vegetation and fire exposure",
+    "zone": "Exterior",
+    "risk": "Fire",
+    "instruction": "Walk the outside of the house and photograph the gap between the walls and any vegetation.",
+    "tips": [
+      "The front elevation, from the street",
+      "Each remaining side and the rear, from far enough back to show the gap between wall and vegetation",
+      "The 0–5 ft strip against the foundation — mulch, shrubs touching siding",
+      "The roof edge and gutters from the ground, including any overhanging canopy",
+      "The downslope, if the lot is graded"
+    ]
+  },
+  {
+    "slug": "roof-eaves-and-vents",
+    "name": "Roof, eaves and vents",
+    "zone": "Exterior",
+    "risk": "Water & fire",
+    "instruction": "From the ground, photograph the largest visible roof slope, then follow the edge round to the eaves. Do not climb.",
+    "tips": [
+      "Shingles or tiles in focus — patches, gaps or missing pieces",
+      "The eaves and any soffit or gable vents, close enough to see whether they are screened",
+      "Debris sitting in the valleys or along the roof edge"
+    ]
+  },
+  {
+    "slug": "gutters-and-drainage",
+    "name": "Gutters, downspouts and drainage",
+    "zone": "Exterior",
+    "risk": "Water",
+    "instruction": "Photograph one downspout from the gutter seam above it down to where the water lands.",
+    "tips": [
+      "The gutter seam above, and any debris sitting in the trough",
+      "Where the water exits at the bottom",
+      "The ground below the spout — splash block, erosion, or water running back toward the house"
+    ]
+  },
+  {
+    "slug": "deck-porch-and-stored-combustibles",
+    "name": "Deck, porch and stored combustibles",
+    "zone": "Exterior",
+    "risk": "Fire",
+    "instruction": "Photograph any attached deck or porch, including what is stored underneath it and against the house.",
+    "tips": [
+      "The deck surface and where it meets the wall of the house",
+      "Underneath the deck — stored wood, furniture, or built-up leaf litter",
+      "Firewood, propane tanks or bins stacked against the walls"
+    ]
+  },
+  {
+    "slug": "water-heater",
+    "name": "Water heater",
+    "zone": "Utility",
+    "risk": "Water & fire",
+    "instruction": "Stand about six feet back and photograph the full unit, showing the tank, the floor, and the immediate surroundings.",
+    "tips": [
+      "The top of the unit: supply connections, fittings, and the T&P valve with its discharge pipe",
+      "The base of the tank and the floor: drip pan, rust at the bottom seam, staining",
+      "The data plate or label — the serial number tells us the manufacture date"
+    ],
+    "followUpPrompt": "The unit looks past ten years old. Add a close-up of the data plate so we can confirm its age from the serial."
+  },
+  {
+    "slug": "main-water-shutoff",
+    "name": "Main water shutoff",
+    "zone": "Utility",
+    "risk": "Water",
+    "instruction": "Photograph the main shutoff valve for the whole house, with enough around it to show where it is.",
+    "tips": [
+      "The valve handle, close enough to read any label",
+      "The pipe on either side of the valve",
+      "The route you would take to reach it in a hurry"
+    ]
+  },
+  {
+    "slug": "electrical-panel",
+    "name": "Electrical panel",
+    "zone": "Utility",
+    "risk": "Fire",
+    "instruction": "Open the panel door — the outer door, not the cover — and photograph the breakers and their labels.",
+    "tips": [
+      "All breakers, with the labels readable",
+      "The brand label on the panel",
+      "Any rust, scorching or discoloration"
+    ]
+  },
+  {
+    "slug": "furnace-and-condensate",
+    "name": "Furnace, air handler and condensate line",
+    "zone": "Utility",
+    "risk": "Water & fire",
+    "instruction": "Photograph the furnace or air handler from far enough back to see the whole unit and the floor beneath it.",
+    "tips": [
+      "The manufacturer label",
+      "The condensate line and its drain pan",
+      "Any staining or rust on the pan or the floor below"
+    ]
+  },
+  {
+    "slug": "washer-hoses",
+    "name": "Washing machine hoses",
+    "zone": "Utility",
+    "risk": "Water",
+    "instruction": "Pull the washing machine forward if it is safe to do so and photograph the hoses at the back.",
+    "tips": [
+      "Both the hot and cold hoses, end to end",
+      "The wall valves they connect to",
+      "The floor beneath — staining, or a drain pan if there is one"
+    ]
+  },
+  {
+    "slug": "dryer-vent-and-lint",
+    "name": "Dryer vent and lint path",
+    "zone": "Utility",
+    "risk": "Fire",
+    "instruction": "Photograph the back of the dryer where the vent duct connects, then the vent's outlet on the outside wall.",
+    "tips": [
+      "The duct behind the dryer — crushed, kinked or disconnected sections",
+      "Lint built up behind or underneath the machine",
+      "The exterior vent hood, and whether its flap moves freely"
+    ]
+  },
+  {
+    "slug": "under-kitchen-counter",
+    "name": "Under the kitchen counter",
+    "zone": "Kitchen",
+    "risk": "Water",
+    "instruction": "Open the cabinet under the kitchen sink and take a wide shot of the whole space, with both sides of the P-trap in frame.",
+    "tips": [
+      "Both sides of the P-trap in one frame",
+      "The supply lines and both shutoff valves",
+      "The cabinet floor and base — staining, swelling, or warped particleboard"
+    ],
+    "followUpPrompt": "We see a dark ring on the cabinet floor near the trap. Take one close-up of that spot so we can tell an active leak from an old stain."
+  },
+  {
+    "slug": "dishwasher-and-supply",
+    "name": "Dishwasher and its supply line",
+    "zone": "Kitchen",
+    "risk": "Water",
+    "instruction": "Open the dishwasher door and photograph the unit, then the supply line where it runs under the sink.",
+    "tips": [
+      "The floor and cabinet edge directly in front of the dishwasher",
+      "The supply line and its shutoff valve",
+      "The seal along the bottom of the door"
+    ]
+  },
+  {
+    "slug": "refrigerator-water-line",
+    "name": "Refrigerator water line",
+    "zone": "Kitchen",
+    "risk": "Water",
+    "instruction": "Pull the fridge forward if it is safe to do so and photograph the water line behind it.",
+    "tips": [
+      "The braided or plastic line, end to end",
+      "The shutoff valve",
+      "The floor behind the fridge — staining or buckling"
+    ]
+  },
+  {
+    "slug": "range-and-hood",
+    "name": "Range, cooktop and hood",
+    "zone": "Kitchen",
+    "risk": "Fire",
+    "instruction": "Photograph the range or cooktop with the hood above it in frame.",
+    "tips": [
+      "The burners or cooktop surface",
+      "The underside of the hood and its filter — grease buildup",
+      "The wall and cabinets on either side of the range"
+    ]
+  },
+  {
+    "slug": "under-primary-bath-sink",
+    "name": "Under the primary bath sink",
+    "zone": "Bathroom",
+    "risk": "Water",
+    "instruction": "Open the primary bathroom vanity and take a wide shot of the whole space, with both sides of the P-trap in frame.",
+    "tips": [
+      "Both sides of the P-trap in one frame",
+      "The supply lines and both shutoff valves",
+      "The cabinet floor and base — staining, swelling, or warped particleboard"
+    ]
+  },
+  {
+    "slug": "tub-and-shower-seal",
+    "name": "Tub and shower seal",
+    "zone": "Bathroom",
+    "risk": "Water",
+    "instruction": "Photograph where the tub or shower base meets the wall.",
+    "tips": [
+      "The caulk line, corner to corner",
+      "Grout condition on the surrounding tile",
+      "The corners, where movement shows first"
+    ]
+  },
+  {
+    "slug": "toilet-supply-and-base",
+    "name": "Toilet supply line and base",
+    "zone": "Bathroom",
+    "risk": "Water",
+    "instruction": "Photograph the toilet from the side, low enough to catch the supply line and the floor at its base.",
+    "tips": [
+      "The supply line and its shutoff valve",
+      "The floor where the base meets it — staining or soft flooring",
+      "Any gap or rocking where the base sits"
+    ]
+  },
+  {
+    "slug": "smoke-detectors",
+    "name": "Smoke detectors",
+    "zone": "Interior",
+    "risk": "Fire",
+    "instruction": "Photograph each smoke detector with enough ceiling or wall around it to establish where it is.",
+    "tips": [
+      "One photo per detector, showing the unit plus its surroundings",
+      "A wide shot of the hallway outside the sleeping rooms",
+      "One photo per level of the home, so we can check coverage"
+    ]
+  },
+  {
+    "slug": "fireplace-and-chimney",
+    "name": "Fireplace, wood stove or chimney",
+    "zone": "Interior",
+    "risk": "Fire",
+    "instruction": "Photograph the fireplace or wood stove with the floor and wall around it, then the chimney from outside.",
+    "tips": [
+      "The firebox and the hearth in front of it",
+      "Anything combustible within three feet — rugs, furniture, stored wood",
+      "The chimney from the ground, including the cap and any spark arrestor"
+    ]
+  },
+  {
+    "slug": "attic-crawlspace-or-basement",
+    "name": "Attic, crawlspace or basement",
+    "zone": "Interior",
+    "risk": "Water",
+    "instruction": "Photograph whichever unfinished space your home has under the roof or under the floor — only where you can reach safely.",
+    "tips": [
+      "The underside of the roof deck — dark staining around nails or vents",
+      "Insulation that is compressed, discolored or fallen",
+      "The lowest point of the floor — standing water, chalky residue on walls, or a sump pump if there is one"
+    ]
+  }
+]
