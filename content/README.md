@@ -43,3 +43,23 @@ The list is a JSON array. Items appear in the app in the order they appear here.
   item rather than a scripted response.
 - Which items the demo opens as already captured is set by `DEMO_COMPLETED_SLUGS`
   in `lib/tasks.ts` — that is demo staging, not content, so it stays in code.
+
+## `data-use-policy.json`
+
+The policy shown in the scrollable box on the consent step of onboarding. A JSON
+array of sections, rendered in order:
+
+```json
+{
+  "heading": "1. What we collect",
+  "paragraphs": ["…", "…"]
+}
+```
+
+Both fields are required. Unlike the photo list there is no validation pass and
+no entity behind it — this is presentational copy the consent page reads
+directly.
+
+**The text in there now is placeholder, not legal language.** It exists so the
+box has something real-shaped to scroll. Replace it with the actual policy
+before this goes in front of a homeowner.

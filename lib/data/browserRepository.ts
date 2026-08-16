@@ -174,6 +174,7 @@ export const browserRepository: InspectionRepository = {
       homeAddress: seed.homeAddress,
       homeownerFirstName: seed.homeownerFirstName,
       status: "open",
+      onboardingCompletedAt: null,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -191,6 +192,21 @@ export const browserRepository: InspectionRepository = {
     const assessment = records.assessments[assessmentId];
     if (!assessment) throw new Error(`Unknown assessment: ${assessmentId}`);
     const updated = { ...assessment, status, updatedAt: now() };
+    records.assessments[assessmentId] = updated;
+    writeRecords(records);
+    return updated;
+  },
+
+  async completeOnboarding(assessmentId: string): Promise<Assessment> {
+    const records = readRecords();
+    const assessment = records.assessments[assessmentId];
+    if (!assessment) throw new Error(`Unknown assessment: ${assessmentId}`);
+    const timestamp = now();
+    const updated = {
+      ...assessment,
+      onboardingCompletedAt: timestamp,
+      updatedAt: timestamp,
+    };
     records.assessments[assessmentId] = updated;
     writeRecords(records);
     return updated;

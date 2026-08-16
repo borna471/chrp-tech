@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { analyzePhoto } from "@/lib/ai/analyzePhoto";
 import type { AnalyzePhotoResult } from "@/lib/ai/types";
@@ -8,9 +9,9 @@ import type { Assessment, PhotoCapture, PhotoTask } from "@/lib/data/types";
 import { demoConfig } from "@/lib/demoConfig";
 import { FOLLOW_UP_TIPS } from "@/lib/tasks";
 
-export type Screen = "home" | "capture" | "done";
 export type Phase = "instruct" | "analyzing" | "result" | "error";
-export type RowState = "done" | "skipped" | "next" | "pending";
+
+export type CaptureView = ReturnType<typeof useCapture>["view"];
 
 /**
  * How long to wait after opening the camera before standing in a photo. On a
@@ -19,16 +20,18 @@ export type RowState = "done" | "skipped" | "next" | "pending";
  */
 const DEMO_AUTO_SHOT_MS = 900;
 
-export type Inspection = ReturnType<typeof useInspection>;
-export type InspectionView = Inspection["view"];
+/**
+ * One photo task, addressed by its slug in the URL. Owns everything about
+ * capturing and reviewing that one shot; when the task is settled it hands the
+ * homeowner on to the next slug, or back to the dashboard when none is left.
+ */
+export function useCapture(slug: string) {
+  const router = useRouter();
 
-export function useInspection() {
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [tasks, setTasks] = useState<PhotoTask[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
-  const [screen, setScreen] = useState<Screen>("home");
-  const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>("instruct");
   const [capture, setCapture] = useState<PhotoCapture | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -56,7 +59,6 @@ export function useInspection() {
       if (cancelled) return;
       setAssessment(loaded);
       setTasks(loadedTasks);
-      setScreen(loaded.status === "complete" ? "done" : "home");
       setHydrated(true);
     })();
     return () => {
@@ -71,16 +73,21 @@ export function useInspection() {
     [],
   );
 
+  const current = tasks.find((task) => task.slug === slug) ?? null;
+
+  // A slug that names no task is a dead link — send them back to the list.
+  useEffect(() => {
+    if (hydrated && !current) router.replace("/");
+  }, [current, hydrated, router]);
+
   const clearPhoto = useCallback(() => {
-    setPhotoUrl((current) => {
-      if (current) URL.revokeObjectURL(current);
+    setPhotoUrl((existing) => {
+      if (existing) URL.revokeObjectURL(existing);
       return null;
     });
     setCapture(null);
     setResult(null);
   }, []);
-
-  const current = tasks[idx] ?? tasks[0] ?? null;
 
   // The photo already on file for this task, so a homeowner returning to it
   // after a refresh sees their own shot rather than a blank instruction.
@@ -103,29 +110,6 @@ export function useInspection() {
       if (created) URL.revokeObjectURL(created);
     };
   }, [current, phase]);
-
-  const firstPendingIndex = useCallback(() => {
-    const index = tasks.findIndex((task) => task.status !== "done");
-    return index === -1 ? 0 : index;
-  }, [tasks]);
-
-  const start = useCallback(() => {
-    if (tasks.length === 0) return;
-    if (tasks.every((task) => task.status === "done")) {
-      setScreen("done");
-      return;
-    }
-    clearPhoto();
-    setIdx(firstPendingIndex());
-    setPhase("instruct");
-    setScreen("capture");
-  }, [clearPhoto, firstPendingIndex, tasks]);
-
-  const goHome = useCallback(() => {
-    clearPhoto();
-    setPhase("instruct");
-    setScreen("home");
-  }, [clearPhoto]);
 
   const runAnalysis = useCallback(
     async (task: PhotoTask, saved: PhotoCapture, blob: Blob | null) => {
@@ -229,32 +213,35 @@ export function useInspection() {
     setPhase("instruct");
   }, [clearPhoto]);
 
-  const moveTo = useCallback(
-    (nextTasks: PhotoTask[], startIndex: number) => {
-      // Skipped tasks are deliberately not revisited — the home screen chases
-      // them with a banner instead.
-      const forward = nextTasks.findIndex(
-        (task, index) => index > startIndex && task.status === "pending",
+  const moveOn = useCallback(
+    (nextTasks: PhotoTask[]) => {
+      // Skipped tasks are deliberately not revisited — the dashboard chases them
+      // with a banner instead.
+      const order = current?.order ?? -1;
+      const forward = nextTasks.find(
+        (task) => task.order > order && task.status === "pending",
       );
       const target =
-        forward !== -1
-          ? forward
-          : nextTasks.findIndex((task) => task.status === "pending");
+        forward ?? nextTasks.find((task) => task.status === "pending") ?? null;
 
       clearPhoto();
       setPhase("instruct");
-      if (target === -1) {
-        setScreen("done");
-        if (assessment) {
-          void getRepository()
-            .setAssessmentStatus(assessment.id, "complete")
-            .then(setAssessment);
-        }
-        return;
-      }
-      setIdx(target);
+      router.push(target ? `/capture/${target.slug}` : "/");
     },
-    [assessment, clearPhoto],
+    [clearPhoto, current, router],
+  );
+
+  const settle = useCallback(
+    async (status: "done" | "skipped") => {
+      if (!current) return;
+      const updated = await getRepository().setTaskStatus(current.id, status);
+      const nextTasks = tasks.map((task) =>
+        task.id === updated.id ? updated : task,
+      );
+      setTasks(nextTasks);
+      moveOn(nextTasks);
+    },
+    [current, moveOn, tasks],
   );
 
   const advance = useCallback(async () => {
@@ -265,84 +252,19 @@ export function useInspection() {
       setPhase("instruct");
       return;
     }
-    const updated = await getRepository().setTaskStatus(current.id, "done");
-    const nextTasks = tasks.map((task) =>
-      task.id === updated.id ? updated : task,
-    );
-    setTasks(nextTasks);
-    moveTo(nextTasks, idx);
-  }, [clearPhoto, current, idx, moveTo, result, tasks]);
+    await settle("done");
+  }, [clearPhoto, current, result, settle]);
 
-  const skipTask = useCallback(async () => {
-    if (!current) return;
-    const updated = await getRepository().setTaskStatus(current.id, "skipped");
-    const nextTasks = tasks.map((task) =>
-      task.id === updated.id ? updated : task,
-    );
-    setTasks(nextTasks);
-    moveTo(nextTasks, idx);
-  }, [current, idx, moveTo, tasks]);
-
-  const startOver = useCallback(async () => {
-    const repository = getRepository();
-    await repository.resetAssessment(demoConfig.assessmentId);
-    const reopened = await repository.openAssessment({
-      id: demoConfig.assessmentId,
-      policyRef: demoConfig.policyRef,
-      homeAddress: demoConfig.homeAddress,
-      homeownerFirstName: demoConfig.homeownerFirstName,
-    });
-    clearPhoto();
-    setAssessment(reopened);
-    setTasks(await repository.listTasks(reopened.id));
-    setIdx(0);
-    setPhase("instruct");
-    setScreen("home");
-  }, [clearPhoto]);
+  const skipTask = useCallback(() => settle("skipped"), [settle]);
 
   const view = useMemo(() => {
     const total = tasks.length;
     const doneCount = tasks.filter((task) => task.status === "done").length;
-    const remaining = total - doneCount;
-    const nextIndex = firstPendingIndex();
-    const skipped = tasks.find((task) => task.status === "skipped") ?? null;
     const isFollowUpShot = current?.followUpPrompt != null;
 
     return {
-      firstName: assessment?.homeownerFirstName ?? demoConfig.homeownerFirstName,
-      homeAddress: assessment?.homeAddress ?? demoConfig.homeAddress,
-      policyRef: assessment?.policyRef ?? demoConfig.policyRef,
-
-      doneCount,
-      totalCount: total,
       progressPct: total === 0 ? 0 : Math.round((doneCount / total) * 100),
-      remainingLabel: `${remaining} still to capture`,
-      minutesLeft: Math.max(2, Math.round(remaining * 1.5)),
-      ctaLabel:
-        doneCount === 0
-          ? "Start inspection capture"
-          : doneCount === total
-            ? "Review my photos"
-            : "Continue inspection capture",
-
-      flagText: skipped
-        ? `You skipped ${skipped.name}. We can't close the assessment without it.`
-        : null,
-
-      rows: tasks.map((task, index) => ({
-        id: task.id,
-        name: task.name,
-        zone: `${task.zone} · ${task.risk}`,
-        state: (task.status === "done"
-          ? "done"
-          : task.status === "skipped"
-            ? "skipped"
-            : index === nextIndex
-              ? "next"
-              : "pending") as RowState,
-      })),
-
-      stepLabel: `Photo ${idx + 1} of ${total}`,
+      stepLabel: `Photo ${(current?.order ?? 0) + 1} of ${total}`,
       currentName: current
         ? isFollowUpShot
           ? `${current.name} — close-up`
@@ -362,23 +284,19 @@ export function useInspection() {
         : (current?.instruction ?? ""),
       currentTips: isFollowUpShot ? FOLLOW_UP_TIPS : (current?.tips ?? []),
     };
-  }, [assessment, capture, current, firstPendingIndex, idx, tasks]);
+  }, [capture, current, tasks]);
 
   return {
-    hydrated,
-    screen,
+    ready: hydrated && current !== null,
     phase,
     view,
     result,
     photoUrl,
     savedPhotoUrl,
-    start,
-    goHome,
     openCamera,
     retake,
     retryAnalysis,
     advance,
     skipTask,
-    startOver,
   };
 }

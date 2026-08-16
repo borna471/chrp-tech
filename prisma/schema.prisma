@@ -43,6 +43,8 @@ model Assessment {
   homeAddress        String
   homeownerFirstName String
   status             AssessmentStatus @default(open)
+  // Set once the homeowner has confirmed the property and accepted the terms.
+  onboardingCompletedAt DateTime?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 

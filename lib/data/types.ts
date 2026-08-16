@@ -15,6 +15,8 @@ export type Assessment = {
   homeAddress: string;
   homeownerFirstName: string;
   status: AssessmentStatus;
+  /** Set once the homeowner has confirmed the property and accepted the terms. */
+  onboardingCompletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

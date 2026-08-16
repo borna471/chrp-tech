@@ -41,6 +41,8 @@ export interface InspectionRepository {
     assessmentId: string,
     status: AssessmentStatus,
   ): Promise<Assessment>;
+  /** Marks onboarding done, so a returning homeowner is not walked through it twice. */
+  completeOnboarding(assessmentId: string): Promise<Assessment>;
 
   listTasks(assessmentId: string): Promise<PhotoTask[]>;
   setTaskStatus(taskId: string, status: TaskStatus): Promise<PhotoTask>;

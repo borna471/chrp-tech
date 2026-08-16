@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/Button";
-import type { AnalyzePhotoResult } from "@/lib/ai/types";
-import type { InspectionView, Phase } from "@/lib/useInspection";
+import { useCapture } from "@/lib/useCapture";
 
 /** The newsprint-ish diagonal fill that stands in for a photograph. */
 const EXAMPLE_FRAME =
@@ -11,39 +14,35 @@ const DEMO_PHOTO =
 /** Tried in order until one loads; missing files fall back to EXAMPLE_FRAME. */
 const EXAMPLE_EXTENSIONS = ["webp", "jpeg", "jpg"] as const;
 
-type CaptureScreenProps = {
-  view: InspectionView;
-  phase: Phase;
-  result: AnalyzePhotoResult | null;
-  photoUrl: string | null;
-  savedPhotoUrl: string | null;
-  onBack: () => void;
-  onCapture: () => void;
-  onSkip: () => void;
-  onAdvance: () => void;
-  onRetake: () => void;
-  onRetry: () => void;
-};
+export default function CapturePage() {
+  const { slug } = useParams<{ slug: string }>();
+  const {
+    ready,
+    phase,
+    view,
+    result,
+    photoUrl,
+    savedPhotoUrl,
+    openCamera,
+    retake,
+    retryAnalysis,
+    advance,
+    skipTask,
+  } = useCapture(slug);
 
-export function CaptureScreen({
-  view,
-  phase,
-  result,
-  photoUrl,
-  savedPhotoUrl,
-  onBack,
-  onCapture,
-  onSkip,
-  onAdvance,
-  onRetake,
-  onRetry,
-}: CaptureScreenProps) {
   const showInstruction = phase === "instruct";
-  const [exampleExtIndex, setExampleExtIndex] = useState(0);
+  // Carries the slug it counts for, so moving to another task starts over at the
+  // first extension without needing an effect to reset it.
+  const [example, setExample] = useState({ slug, index: 0 });
+  const exampleExtIndex = example.slug === slug ? example.index : 0;
 
-  useEffect(() => {
-    setExampleExtIndex(0);
-  }, [view.currentSlug]);
+  if (!ready) {
+    return (
+      <div className="flex flex-1 items-center justify-center text-sm text-steel-600">
+        Loading this photo…
+      </div>
+    );
+  }
 
   const exampleFailed = exampleExtIndex >= EXAMPLE_EXTENSIONS.length;
   const exampleSrc =
@@ -55,13 +54,12 @@ export function CaptureScreen({
   return (
     <div className="flex flex-1 flex-col overflow-y-auto px-5 pb-6">
       <div className="my-4 mb-[18px] flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          className="py-1.5 pr-2.5 pl-0 text-sm"
+        <Link
+          href="/"
+          className="btn btn-ghost py-1.5 pr-2.5 pl-0 text-sm"
         >
           ← All photos
-        </Button>
+        </Link>
         <span className="text-[11px] tracking-[.12em] text-steel-700 uppercase">
           {view.stepLabel}
         </span>
@@ -112,14 +110,14 @@ export function CaptureScreen({
                   src={exampleSrc}
                   alt={`Example frame for ${view.currentName}`}
                   className="absolute inset-0 h-full w-full object-cover"
-                  onError={() => setExampleExtIndex((i) => i + 1)}
+                  onError={() =>
+                    setExample({ slug, index: exampleExtIndex + 1 })
+                  }
                 />
               )
             )}
             <span className="relative rounded-full bg-bg px-2 py-[5px] text-[10px] tracking-[.1em] text-steel-700 uppercase">
-              {savedPhotoUrl
-                ? `Photo on file`
-                : `Example frame`}
+              {savedPhotoUrl ? `Photo on file` : `Example frame`}
             </span>
           </div>
 
@@ -212,7 +210,7 @@ export function CaptureScreen({
             <Button
               variant="primary"
               block
-              onClick={onCapture}
+              onClick={openCamera}
               className="min-h-[54px] p-4 text-[17px] font-semibold"
             >
               Capture photo
@@ -220,7 +218,7 @@ export function CaptureScreen({
             <Button
               variant="ghost"
               block
-              onClick={onSkip}
+              onClick={() => void skipTask()}
               className="min-h-[44px] text-sm"
             >
               Skip for now
@@ -232,7 +230,7 @@ export function CaptureScreen({
             <Button
               variant="primary"
               block
-              onClick={onAdvance}
+              onClick={() => void advance()}
               className="min-h-[54px] p-4 text-[17px] font-semibold"
             >
               {result.verdict === "follow_up"
@@ -242,7 +240,7 @@ export function CaptureScreen({
             <Button
               variant="ghost"
               block
-              onClick={onRetake}
+              onClick={retake}
               className="min-h-[44px] text-sm"
             >
               Retake this photo
@@ -254,7 +252,7 @@ export function CaptureScreen({
             <Button
               variant="primary"
               block
-              onClick={onRetry}
+              onClick={() => void retryAnalysis()}
               className="min-h-[54px] p-4 text-[17px] font-semibold"
             >
               Try again
@@ -262,7 +260,7 @@ export function CaptureScreen({
             <Button
               variant="ghost"
               block
-              onClick={onRetake}
+              onClick={retake}
               className="min-h-[44px] text-sm"
             >
               Retake this photo
