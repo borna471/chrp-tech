@@ -21,6 +21,7 @@ Things you should be doing:
 - Put permission checks in `page.tsx`, never in `layout.tsx`
 - Use `ast-grep` for searching if available; otherwise use `rg` (ripgrep), then fall back to `grep`
 - Only add code comments that explain **why**, not **what** — see [code comment guidelines](quality-code-comments.md)
+- Add a comment at the top of every file explaining what that file does
 
 
 ## Don't
