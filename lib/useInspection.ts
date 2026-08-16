@@ -355,6 +355,7 @@ export function useInspection() {
           ? `${current.name} — close-up`
           : current.name
         : "",
+      currentSlug: current?.slug ?? "",
       currentZone: current ? `${current.zone} · ${current.risk}` : "",
       currentInstruction: isFollowUpShot
         ? (current?.followUpPrompt ?? "")

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/Button";
 import type { AnalyzePhotoResult } from "@/lib/ai/types";
 import type { InspectionView, Phase } from "@/lib/useInspection";
@@ -7,6 +8,8 @@ const EXAMPLE_FRAME =
   "repeating-linear-gradient(135deg,var(--color-steel-200) 0 12px,var(--color-surface) 12px 24px)";
 const DEMO_PHOTO =
   "repeating-linear-gradient(115deg,#0d3a4f 0 10px,#154c66 10px 20px)";
+/** Tried in order until one loads; missing files fall back to EXAMPLE_FRAME. */
+const EXAMPLE_EXTENSIONS = ["webp", "jpeg", "jpg"] as const;
 
 type CaptureScreenProps = {
   view: InspectionView;
@@ -36,6 +39,18 @@ export function CaptureScreen({
   onRetry,
 }: CaptureScreenProps) {
   const showInstruction = phase === "instruct";
+  const [exampleExtIndex, setExampleExtIndex] = useState(0);
+
+  useEffect(() => {
+    setExampleExtIndex(0);
+  }, [view.currentSlug]);
+
+  const exampleFailed = exampleExtIndex >= EXAMPLE_EXTENSIONS.length;
+  const exampleSrc =
+    view.currentSlug && !exampleFailed
+      ? `/example-frames/${view.currentSlug}.${EXAMPLE_EXTENSIONS[exampleExtIndex]}`
+      : null;
+  const showExampleImage = !savedPhotoUrl && !!exampleSrc;
 
   return (
     <div className="flex flex-1 flex-col overflow-y-auto px-5 pb-6">
@@ -73,9 +88,13 @@ export function CaptureScreen({
 
           <div
             className="relative mb-5 flex h-[180px] items-end overflow-hidden rounded-lg p-3"
-            style={savedPhotoUrl ? undefined : { background: EXAMPLE_FRAME }}
+            style={
+              savedPhotoUrl || showExampleImage
+                ? undefined
+                : { background: EXAMPLE_FRAME }
+            }
           >
-            {savedPhotoUrl && (
+            {savedPhotoUrl ? (
               // A blob URL from IndexedDB — next/image cannot optimize it.
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -83,11 +102,24 @@ export function CaptureScreen({
                 alt={`Your saved photo of ${view.currentName}`}
                 className="absolute inset-0 h-full w-full object-cover"
               />
+            ) : (
+              showExampleImage &&
+              exampleSrc && (
+                // Static files under public/ — next/image is unnecessary here.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={exampleSrc}
+                  src={exampleSrc}
+                  alt={`Example frame for ${view.currentName}`}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  onError={() => setExampleExtIndex((i) => i + 1)}
+                />
+              )
             )}
             <span className="relative rounded-full bg-bg px-2 py-[5px] text-[10px] tracking-[.1em] text-steel-700 uppercase">
               {savedPhotoUrl
-                ? `Photo on file — ${view.currentName}`
-                : `Example frame — ${view.currentName}`}
+                ? `Photo on file`
+                : `Example frame`}
             </span>
           </div>
 
