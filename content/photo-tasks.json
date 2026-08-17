@@ -11,6 +11,27 @@
       "The 0–5 ft strip against the foundation — mulch, shrubs touching siding",
       "The roof edge and gutters from the ground, including any overhanging canopy",
       "The downslope, if the lot is graded"
+    ],
+    "requiredElements": [
+      { "id": "wall-base", "description": "The base of an exterior wall where it meets the ground" },
+      { "id": "adjacent-ground", "description": "The strip of ground immediately against that wall" }
+    ],
+    "checks": [
+      {
+        "id": "vegetation-contact",
+        "lookFor": "Shrubs, branches or climbing plants touching or overhanging the siding, wall or roof edge",
+        "severity": "attention"
+      },
+      {
+        "id": "combustible-ground-cover",
+        "lookFor": "Bark mulch, dry grass or leaf litter laid against the foundation within roughly five feet of the wall",
+        "severity": "attention"
+      },
+      {
+        "id": "overhanging-canopy",
+        "lookFor": "Tree canopy extending over the roof or within a few feet of the roof edge",
+        "severity": "advisory"
+      }
     ]
   },
   {
@@ -23,6 +44,28 @@
       "Shingles or tiles in focus — patches, gaps or missing pieces",
       "The eaves and any soffit or gable vents, close enough to see whether they are screened",
       "Debris sitting in the valleys or along the roof edge"
+    ],
+    "requiredElements": [
+      { "id": "roof-surface", "description": "A section of roof covering — shingles, tiles or metal" },
+      { "id": "roof-edge", "description": "The roof edge or eave line" }
+    ],
+    "checks": [
+      {
+        "id": "damaged-covering",
+        "lookFor": "Missing, cracked, curling or patched shingles or tiles",
+        "severity": "urgent"
+      },
+      {
+        "id": "unscreened-vents",
+        "lookFor": "Soffit, gable or ridge vents with no mesh screen, or with damaged or displaced screening",
+        "severity": "attention",
+        "closeUpPrompt": "We can't tell whether that vent is screened. Take one close-up of the vent opening so we can see the mesh."
+      },
+      {
+        "id": "roof-debris",
+        "lookFor": "Leaf litter, needles or branches accumulated in valleys or along the roof edge",
+        "severity": "advisory"
+      }
     ]
   },
   {
@@ -35,6 +78,32 @@
       "The gutter seam above, and any debris sitting in the trough",
       "Where the water exits at the bottom",
       "The ground below the spout — splash block, erosion, or water running back toward the house"
+    ],
+    "requiredElements": [
+      { "id": "downspout", "description": "A downspout running down the wall" },
+      { "id": "discharge-point", "description": "The ground where the downspout discharges" }
+    ],
+    "checks": [
+      {
+        "id": "gutter-blockage",
+        "lookFor": "Leaves, needles or silt visible in the gutter trough, or plants growing from it",
+        "severity": "attention"
+      },
+      {
+        "id": "discharge-against-foundation",
+        "lookFor": "Downspout discharging directly against the foundation with no splash block or extension",
+        "severity": "urgent"
+      },
+      {
+        "id": "ground-erosion",
+        "lookFor": "Soil erosion, pooling water or a washed-out channel at the discharge point",
+        "severity": "attention"
+      },
+      {
+        "id": "separated-downspout",
+        "lookFor": "Downspout sections separated, crushed or hanging away from the wall",
+        "severity": "attention"
+      }
     ]
   },
   {
@@ -47,6 +116,32 @@
       "The deck surface and where it meets the wall of the house",
       "Underneath the deck — stored wood, furniture, or built-up leaf litter",
       "Firewood, propane tanks or bins stacked against the walls"
+    ],
+    "requiredElements": [
+      { "id": "deck-structure", "description": "The deck or porch surface" },
+      { "id": "house-junction", "description": "Where the deck meets the wall of the house" }
+    ],
+    "checks": [
+      {
+        "id": "stored-combustibles",
+        "lookFor": "Firewood, cardboard, furniture or bins stacked under the deck or against the house wall",
+        "severity": "urgent"
+      },
+      {
+        "id": "propane-near-wall",
+        "lookFor": "Propane or fuel cylinders standing against or close to the wall of the house",
+        "severity": "urgent"
+      },
+      {
+        "id": "under-deck-litter",
+        "lookFor": "Built-up leaf litter or dry debris in the space beneath the deck",
+        "severity": "attention"
+      },
+      {
+        "id": "deck-rot",
+        "lookFor": "Soft, darkened, split or visibly rotting deck boards or support posts",
+        "severity": "attention"
+      }
     ]
   },
   {
@@ -60,7 +155,39 @@
       "The base of the tank and the floor: drip pan, rust at the bottom seam, staining",
       "The data plate or label — the serial number tells us the manufacture date"
     ],
-    "followUpPrompt": "The unit looks past ten years old. Add a close-up of the data plate so we can confirm its age from the serial."
+    "requiredElements": [
+      { "id": "full-tank", "description": "The whole height of the tank, top to bottom" },
+      { "id": "tank-base", "description": "The base of the tank and the floor beneath it" },
+      { "id": "top-connections", "description": "The pipe connections at the top of the unit" }
+    ],
+    "checks": [
+      {
+        "id": "base-corrosion",
+        "lookFor": "Rust, flaking or corrosion at the bottom seam of the tank or on its base ring",
+        "severity": "urgent"
+      },
+      {
+        "id": "floor-staining",
+        "lookFor": "Water staining, mineral crust or damp patches on the floor around the tank",
+        "severity": "urgent"
+      },
+      {
+        "id": "no-drip-pan",
+        "lookFor": "Tank standing directly on the floor with no drip pan beneath it",
+        "severity": "attention"
+      },
+      {
+        "id": "tpr-discharge",
+        "lookFor": "Temperature and pressure relief valve with no discharge pipe, or a pipe that ends well above the floor",
+        "severity": "attention"
+      },
+      {
+        "id": "unit-age",
+        "lookFor": "Signs the unit is old — a dated or corroded data plate, heavy scale, or outdated fittings",
+        "severity": "advisory",
+        "closeUpPrompt": "The unit looks past ten years old. Add a close-up of the data plate so we can confirm its age from the serial."
+      }
+    ]
   },
   {
     "slug": "main-water-shutoff",
@@ -72,6 +199,28 @@
       "The valve handle, close enough to read any label",
       "The pipe on either side of the valve",
       "The route you would take to reach it in a hurry"
+    ],
+    "requiredElements": [
+      { "id": "valve", "description": "The shutoff valve itself, handle included" },
+      { "id": "surrounding-pipe", "description": "The pipe running into and out of the valve" }
+    ],
+    "checks": [
+      {
+        "id": "valve-corrosion",
+        "lookFor": "Rust, green corrosion or mineral crust on the valve body, handle or adjoining pipe",
+        "severity": "attention"
+      },
+      {
+        "id": "valve-obstructed",
+        "lookFor": "Stored items, shelving or clutter blocking access to the valve",
+        "severity": "attention"
+      },
+      {
+        "id": "active-seepage",
+        "lookFor": "Damp, drips or fresh staining at the valve stem or its joints",
+        "severity": "urgent",
+        "closeUpPrompt": "There may be moisture at the valve. Take one close-up of the valve body so we can tell a fresh drip from an old mark."
+      }
     ]
   },
   {
@@ -84,6 +233,32 @@
       "All breakers, with the labels readable",
       "The brand label on the panel",
       "Any rust, scorching or discoloration"
+    ],
+    "requiredElements": [
+      { "id": "breaker-rows", "description": "The rows of breakers inside the open panel" },
+      { "id": "panel-interior", "description": "The interior face of the panel around the breakers" }
+    ],
+    "checks": [
+      {
+        "id": "scorching",
+        "lookFor": "Scorch marks, browning, melted plastic or heat discoloration on breakers or the panel face",
+        "severity": "urgent"
+      },
+      {
+        "id": "panel-rust",
+        "lookFor": "Rust or corrosion inside the panel enclosure or on the breaker faces",
+        "severity": "urgent"
+      },
+      {
+        "id": "unlabeled-breakers",
+        "lookFor": "Breakers with blank, illegible or handwritten-over labels",
+        "severity": "advisory"
+      },
+      {
+        "id": "double-tapped",
+        "lookFor": "More than one wire landed under a single breaker terminal",
+        "severity": "attention"
+      }
     ]
   },
   {
@@ -96,6 +271,32 @@
       "The manufacturer label",
       "The condensate line and its drain pan",
       "Any staining or rust on the pan or the floor below"
+    ],
+    "requiredElements": [
+      { "id": "full-unit", "description": "The whole furnace or air handler cabinet" },
+      { "id": "floor-beneath", "description": "The floor and any drain pan directly beneath the unit" }
+    ],
+    "checks": [
+      {
+        "id": "pan-standing-water",
+        "lookFor": "Standing water, sludge or mineral crust in the condensate drain pan",
+        "severity": "urgent"
+      },
+      {
+        "id": "condensate-line-fault",
+        "lookFor": "Condensate line disconnected, kinked, sagging or discharging onto the floor",
+        "severity": "urgent"
+      },
+      {
+        "id": "cabinet-rust",
+        "lookFor": "Rust streaks or corrosion on the cabinet, pan or the floor beneath the unit",
+        "severity": "attention"
+      },
+      {
+        "id": "combustibles-against-unit",
+        "lookFor": "Boxes, textiles or stored items stacked against the furnace cabinet",
+        "severity": "attention"
+      }
     ]
   },
   {
@@ -108,6 +309,33 @@
       "Both the hot and cold hoses, end to end",
       "The wall valves they connect to",
       "The floor beneath — staining, or a drain pan if there is one"
+    ],
+    "requiredElements": [
+      { "id": "supply-hoses", "description": "The supply hoses running from the wall to the machine" },
+      { "id": "wall-valves", "description": "The wall valves the hoses connect to" },
+      { "id": "floor-behind", "description": "The floor behind and beneath the machine" }
+    ],
+    "checks": [
+      {
+        "id": "rubber-hoses",
+        "lookFor": "Plain rubber supply hoses rather than braided stainless steel",
+        "severity": "urgent"
+      },
+      {
+        "id": "hose-degradation",
+        "lookFor": "Bulging, cracking, kinking, or rust and crust at the hose couplings",
+        "severity": "urgent"
+      },
+      {
+        "id": "floor-staining",
+        "lookFor": "Water staining, warping or mineral residue on the floor behind the machine",
+        "severity": "attention"
+      },
+      {
+        "id": "no-drain-pan",
+        "lookFor": "Machine standing directly on finished floor with no drain pan",
+        "severity": "advisory"
+      }
     ]
   },
   {
@@ -120,6 +348,32 @@
       "The duct behind the dryer — crushed, kinked or disconnected sections",
       "Lint built up behind or underneath the machine",
       "The exterior vent hood, and whether its flap moves freely"
+    ],
+    "requiredElements": [
+      { "id": "vent-duct", "description": "The vent duct where it connects to the back of the dryer" },
+      { "id": "behind-machine", "description": "The floor and wall space behind the dryer" }
+    ],
+    "checks": [
+      {
+        "id": "lint-buildup",
+        "lookFor": "Lint accumulated behind or beneath the dryer, or escaping from the duct connection",
+        "severity": "urgent"
+      },
+      {
+        "id": "foil-duct",
+        "lookFor": "Flexible foil or plastic ducting rather than rigid or semi-rigid metal",
+        "severity": "urgent"
+      },
+      {
+        "id": "duct-crushed",
+        "lookFor": "Duct crushed, sharply kinked, or separated at a joint",
+        "severity": "urgent"
+      },
+      {
+        "id": "duct-disconnected",
+        "lookFor": "Duct fully disconnected from the dryer or the wall outlet",
+        "severity": "urgent"
+      }
     ]
   },
   {
@@ -133,7 +387,34 @@
       "The supply lines and both shutoff valves",
       "The cabinet floor and base — staining, swelling, or warped particleboard"
     ],
-    "followUpPrompt": "We see a dark ring on the cabinet floor near the trap. Take one close-up of that spot so we can tell an active leak from an old stain."
+    "requiredElements": [
+      { "id": "p-trap", "description": "Both sides of the P-trap, in one frame" },
+      { "id": "supply-valves", "description": "The supply lines and both shutoff valves" },
+      { "id": "cabinet-floor", "description": "The floor of the cabinet beneath the plumbing" }
+    ],
+    "checks": [
+      {
+        "id": "trap-corrosion",
+        "lookFor": "Rust, green corrosion or mineral crust on the trap, tailpiece or supply connections",
+        "severity": "attention"
+      },
+      {
+        "id": "cabinet-water-damage",
+        "lookFor": "Dark staining, swelling, bubbling or delaminated particleboard on the cabinet floor",
+        "severity": "urgent",
+        "closeUpPrompt": "We see a dark ring on the cabinet floor near the trap. Take one close-up of that spot so we can tell an active leak from an old stain."
+      },
+      {
+        "id": "active-drip",
+        "lookFor": "Visible droplets, wet surfaces or a container placed to catch water",
+        "severity": "urgent"
+      },
+      {
+        "id": "supply-line-age",
+        "lookFor": "Plastic or plain rubber supply lines rather than braided stainless steel",
+        "severity": "advisory"
+      }
+    ]
   },
   {
     "slug": "dishwasher-and-supply",
@@ -145,6 +426,27 @@
       "The floor and cabinet edge directly in front of the dishwasher",
       "The supply line and its shutoff valve",
       "The seal along the bottom of the door"
+    ],
+    "requiredElements": [
+      { "id": "dishwasher-front", "description": "The open dishwasher and its door" },
+      { "id": "floor-at-base", "description": "The floor and cabinet edge directly in front of the unit" }
+    ],
+    "checks": [
+      {
+        "id": "door-seal-damage",
+        "lookFor": "Cracked, hardened, mouldy or displaced seal along the door edge",
+        "severity": "attention"
+      },
+      {
+        "id": "floor-damage-at-base",
+        "lookFor": "Swelling, discoloration or lifting of the flooring or cabinet edge in front of the unit",
+        "severity": "urgent"
+      },
+      {
+        "id": "base-residue",
+        "lookFor": "Standing water, rust or mineral residue in the base of the tub",
+        "severity": "attention"
+      }
     ]
   },
   {
@@ -157,6 +459,32 @@
       "The braided or plastic line, end to end",
       "The shutoff valve",
       "The floor behind the fridge — staining or buckling"
+    ],
+    "requiredElements": [
+      { "id": "water-line", "description": "The water line running to the back of the fridge" },
+      { "id": "floor-behind", "description": "The floor behind and beneath the fridge" }
+    ],
+    "checks": [
+      {
+        "id": "plastic-line",
+        "lookFor": "Plain plastic or copper tubing rather than braided stainless steel",
+        "severity": "attention"
+      },
+      {
+        "id": "line-kinked",
+        "lookFor": "Water line kinked, pinched behind the appliance, or crimped against the wall",
+        "severity": "urgent"
+      },
+      {
+        "id": "floor-staining",
+        "lookFor": "Staining, buckling or discoloration of the floor behind the fridge",
+        "severity": "urgent"
+      },
+      {
+        "id": "connection-corrosion",
+        "lookFor": "Rust, crust or damp at the valve or the line's connections",
+        "severity": "attention"
+      }
     ]
   },
   {
@@ -169,6 +497,27 @@
       "The burners or cooktop surface",
       "The underside of the hood and its filter — grease buildup",
       "The wall and cabinets on either side of the range"
+    ],
+    "requiredElements": [
+      { "id": "cooktop", "description": "The range or cooktop surface" },
+      { "id": "hood", "description": "The hood or extractor above the range" }
+    ],
+    "checks": [
+      {
+        "id": "grease-buildup",
+        "lookFor": "Grease accumulated on the hood filter, the underside of the hood, or the surrounding wall",
+        "severity": "urgent"
+      },
+      {
+        "id": "combustibles-adjacent",
+        "lookFor": "Towels, packaging, curtains or plastics resting on or beside the cooking surface",
+        "severity": "attention"
+      },
+      {
+        "id": "no-hood",
+        "lookFor": "No extractor hood or vent above the cooking surface",
+        "severity": "advisory"
+      }
     ]
   },
   {
@@ -181,6 +530,29 @@
       "Both sides of the P-trap in one frame",
       "The supply lines and both shutoff valves",
       "The cabinet floor and base — staining, swelling, or warped particleboard"
+    ],
+    "requiredElements": [
+      { "id": "p-trap", "description": "Both sides of the P-trap, in one frame" },
+      { "id": "supply-valves", "description": "The supply lines and both shutoff valves" },
+      { "id": "cabinet-floor", "description": "The floor of the vanity beneath the plumbing" }
+    ],
+    "checks": [
+      {
+        "id": "trap-corrosion",
+        "lookFor": "Rust, green corrosion or mineral crust on the trap, tailpiece or supply connections",
+        "severity": "attention"
+      },
+      {
+        "id": "cabinet-water-damage",
+        "lookFor": "Dark staining, swelling, bubbling or delaminated particleboard on the vanity floor",
+        "severity": "urgent",
+        "closeUpPrompt": "There may be water damage on the vanity floor. Take one close-up of that spot so we can tell an active leak from an old stain."
+      },
+      {
+        "id": "active-drip",
+        "lookFor": "Visible droplets, wet surfaces or a container placed to catch water",
+        "severity": "urgent"
+      }
     ]
   },
   {
@@ -193,6 +565,32 @@
       "The caulk line, corner to corner",
       "Grout condition on the surrounding tile",
       "The corners, where movement shows first"
+    ],
+    "requiredElements": [
+      { "id": "seal-line", "description": "The joint where the tub or shower base meets the wall" },
+      { "id": "surrounding-surface", "description": "The wall surface or tile immediately above that joint" }
+    ],
+    "checks": [
+      {
+        "id": "caulk-failure",
+        "lookFor": "Caulk cracked, split, shrunken, lifting or missing along the joint",
+        "severity": "urgent"
+      },
+      {
+        "id": "grout-deterioration",
+        "lookFor": "Grout crumbling, missing, or darkly discoloured between tiles",
+        "severity": "attention"
+      },
+      {
+        "id": "mould-staining",
+        "lookFor": "Black or dark mould growth along the seal or in the corners",
+        "severity": "attention"
+      },
+      {
+        "id": "loose-tile",
+        "lookFor": "Tiles lifting, cracked, or a wall surface that looks soft or bowed",
+        "severity": "urgent"
+      }
     ]
   },
   {
@@ -205,6 +603,27 @@
       "The supply line and its shutoff valve",
       "The floor where the base meets it — staining or soft flooring",
       "Any gap or rocking where the base sits"
+    ],
+    "requiredElements": [
+      { "id": "supply-line", "description": "The supply line and its shutoff valve" },
+      { "id": "toilet-base", "description": "The base of the toilet where it meets the floor" }
+    ],
+    "checks": [
+      {
+        "id": "base-staining",
+        "lookFor": "Staining, discoloration or lifting flooring around the base of the toilet",
+        "severity": "urgent"
+      },
+      {
+        "id": "supply-corrosion",
+        "lookFor": "Rust, crust or damp at the shutoff valve or the supply connections",
+        "severity": "attention"
+      },
+      {
+        "id": "base-gap",
+        "lookFor": "A visible gap, failed seal or displaced trim where the base meets the floor",
+        "severity": "attention"
+      }
     ]
   },
   {
@@ -217,6 +636,27 @@
       "One photo per detector, showing the unit plus its surroundings",
       "A wide shot of the hallway outside the sleeping rooms",
       "One photo per level of the home, so we can check coverage"
+    ],
+    "requiredElements": [
+      { "id": "detector-unit", "description": "A smoke detector unit" },
+      { "id": "mounting-context", "description": "Enough ceiling or wall around it to show where it is mounted" }
+    ],
+    "checks": [
+      {
+        "id": "missing-or-removed",
+        "lookFor": "A mounting bracket or ceiling mark with no detector on it, or a unit hanging off its base",
+        "severity": "urgent"
+      },
+      {
+        "id": "detector-age",
+        "lookFor": "Yellowed, dusty or visibly dated casing suggesting an old unit",
+        "severity": "advisory"
+      },
+      {
+        "id": "obstructed-placement",
+        "lookFor": "Detector mounted in a corner, behind a beam, or otherwise obstructed",
+        "severity": "attention"
+      }
     ]
   },
   {
@@ -229,6 +669,32 @@
       "The firebox and the hearth in front of it",
       "Anything combustible within three feet — rugs, furniture, stored wood",
       "The chimney from the ground, including the cap and any spark arrestor"
+    ],
+    "requiredElements": [
+      { "id": "firebox", "description": "The firebox or stove body" },
+      { "id": "hearth-area", "description": "The hearth and floor immediately in front of it" }
+    ],
+    "checks": [
+      {
+        "id": "combustibles-near-hearth",
+        "lookFor": "Rugs, furniture, baskets or stored wood within roughly three feet of the firebox opening",
+        "severity": "urgent"
+      },
+      {
+        "id": "creosote-buildup",
+        "lookFor": "Heavy black tarry deposits inside the firebox or flue opening",
+        "severity": "attention"
+      },
+      {
+        "id": "hearth-damage",
+        "lookFor": "Cracked, spalled or missing masonry in the firebox, hearth or surround",
+        "severity": "attention"
+      },
+      {
+        "id": "no-screen-or-door",
+        "lookFor": "An open firebox with no screen or glass door fitted",
+        "severity": "advisory"
+      }
     ]
   },
   {
@@ -241,6 +707,38 @@
       "The underside of the roof deck — dark staining around nails or vents",
       "Insulation that is compressed, discolored or fallen",
       "The lowest point of the floor — standing water, chalky residue on walls, or a sump pump if there is one"
+    ],
+    "requiredElements": [
+      { "id": "structural-surface", "description": "The underside of the roof deck, a foundation wall, or the floor of the space" },
+      { "id": "space-context", "description": "Enough of the surrounding space to show what kind of area this is" }
+    ],
+    "checks": [
+      {
+        "id": "water-staining",
+        "lookFor": "Dark staining or tide marks on the roof deck, joists, foundation walls or floor",
+        "severity": "urgent"
+      },
+      {
+        "id": "standing-water",
+        "lookFor": "Pooled water, damp soil or wet residue at the lowest point of the space",
+        "severity": "urgent"
+      },
+      {
+        "id": "efflorescence",
+        "lookFor": "White chalky mineral residue on masonry or foundation walls",
+        "severity": "attention"
+      },
+      {
+        "id": "insulation-damage",
+        "lookFor": "Insulation compressed, fallen, discoloured or visibly damp",
+        "severity": "attention"
+      },
+      {
+        "id": "mould-growth",
+        "lookFor": "Fuzzy or speckled dark growth on timber, insulation or masonry",
+        "severity": "urgent",
+        "closeUpPrompt": "There may be mould growth on that surface. Take one close-up so we can tell staining from active growth."
+      }
     ]
   }
 ]
