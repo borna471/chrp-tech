@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { getActiveSeed } from "@/lib/activeAssessment";
 import {
   AnalysisError,
   analyzePhoto,
@@ -45,12 +46,7 @@ export function useCapture(slug: string) {
     let cancelled = false;
     const repository = getRepository();
     void (async () => {
-      const loaded = await repository.openAssessment({
-        id: demoConfig.assessmentId,
-        policyRef: demoConfig.policyRef,
-        homeAddress: demoConfig.homeAddress,
-        homeownerFirstName: demoConfig.homeownerFirstName,
-      });
+      const loaded = await repository.openAssessment(getActiveSeed());
       const loadedTasks = await repository.listTasks(loaded.id);
       if (cancelled) return;
       setAssessment(loaded);

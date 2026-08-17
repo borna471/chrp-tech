@@ -1,8 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
-import { AppHeader } from "@/components/AppHeader";
-import { demoConfig } from "@/lib/demoConfig";
 import "./globals.css";
+
+/**
+ * Fonts and the document, nothing else.
+ *
+ * The phone shell that used to live here moved to `(capture)/layout.tsx`, so the
+ * admin side can render full-width on a desktop — a layout nested under this one
+ * composes with it and could not have escaped a `max-w-[430px]` wrapper.
+ */
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -24,14 +30,8 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${poppins.variable} h-full antialiased`}>
-      <body className="min-h-full">
-        <main className="mx-auto flex h-dvh max-w-[430px] flex-col overflow-hidden bg-bg text-ink">
-          <AppHeader policyRef={demoConfig.policyRef} />
-          <div className="relative flex flex-1 flex-col overflow-hidden">
-            {children}
-          </div>
-        </main>
-      </body>
+      {/* No colours here — globals.css paints the backdrop the phone shell sits on. */}
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

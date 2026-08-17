@@ -1,4 +1,25 @@
-export function AppHeader({ policyRef }: { policyRef: string }) {
+"use client";
+
+import { useSyncExternalStore } from "react";
+import { getActiveSeed, subscribeActiveSeed } from "@/lib/activeAssessment";
+
+/**
+ * A client component purely so the policy reference follows the invite.
+ *
+ * It used to be fed `demoConfig.policyRef` from the server layout, which meant
+ * an invited homeowner saw their own address in the page and somebody else's
+ * policy number in the header. The reference is read after mount because the
+ * active assessment lives in localStorage.
+ */
+export function AppHeader() {
+  const policyRef = useSyncExternalStore(
+    subscribeActiveSeed,
+    () => getActiveSeed().policyRef,
+    // Blank on the server: the active assessment is not knowable there, and a
+    // guess would hydrate as a mismatch.
+    () => "",
+  );
+
   return (
     <header className="flex flex-none items-center justify-between bg-accent px-5 pt-3.5 pb-3">
       <div className="flex items-center gap-[9px]">

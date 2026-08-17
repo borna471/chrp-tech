@@ -25,8 +25,14 @@ export const THRESHOLDS = {
   /**
    * After this many attempts the photo is accepted regardless and flagged for a
    * person. A homeowner must never be trapped in a retake loop by a model failure.
+   *
+   * OFF FOR TESTING (null disables it). It was 2, which meant the third shot of
+   * any task was accepted whatever it showed — so re-testing one task with
+   * several photos silently stopped exercising the rules at all. With no cap a
+   * homeowner genuinely can be trapped in a retake loop, so put this back to 2
+   * before anyone outside the team uses the app.
    */
-  maxAttempts: 2,
+  maxAttempts: null as number | null,
 } as const;
 
 export type RetakeReason =
@@ -181,7 +187,10 @@ export function decide(
 ): Decision {
   // Rule 0 outranks every quality check: past the cap we take what we are given
   // and let a person sort it out.
-  if (attemptCount > THRESHOLDS.maxAttempts) {
+  if (
+    THRESHOLDS.maxAttempts !== null &&
+    attemptCount > THRESHOLDS.maxAttempts
+  ) {
     return {
       action: "accepted",
       message: `Thanks — we've got what we need for ${task.name.toLowerCase()}.`,

@@ -12,6 +12,7 @@
  * apart, so parallel requests would race and the second would be rejected.
  */
 
+import { downscaleForUpload } from "@/lib/ai/downscale";
 import type {
   InspectionRepository,
   AssessmentSeed,
@@ -120,9 +121,13 @@ export function withMirror(repo: InspectionRepository): InspectionRepository {
       const capture = await repo.saveCapture(input);
       const body = new FormData();
       body.append("capture", JSON.stringify(capturePayload(capture)));
-      // The original blob, not the downscaled one the reviewer sees: the
-      // insurer wants the full frame.
-      if (input.blob) body.append("photo", input.blob);
+      // The downscaled copy, not the camera original: a phone frame is 3–5MB and
+      // the deployed mirror route is a serverless function with a 4.5MB request
+      // body limit, so the full frame would fail in production while working
+      // locally. It also means the insurer sees exactly the pixels the reviewer
+      // judged. Downscaling twice per photo — once here, once in `analyzePhoto` —
+      // is the price of the capture being saved before the analysis runs.
+      if (input.blob) body.append("photo", await downscaleForUpload(input.blob));
       send("captures", { method: "POST", body });
       return capture;
     },

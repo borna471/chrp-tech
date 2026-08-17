@@ -82,7 +82,12 @@ const taskId = (assessmentId: string, slug: string) => `${assessmentId}:${slug}`
 const newId = () => window.crypto.randomUUID();
 const now = () => new Date().toISOString();
 
-function seedTasks(assessmentId: string): PhotoTask[] {
+/**
+ * @param demoStaging Opens three items as already captured, so the demo starts
+ * part-way through. An invited assessment must not: it would show progress in
+ * the admin list with no photos behind it.
+ */
+function seedTasks(assessmentId: string, demoStaging: boolean): PhotoTask[] {
   return TASK_SEEDS.map((seed, index) => ({
     id: taskId(assessmentId, seed.slug),
     assessmentId,
@@ -93,9 +98,10 @@ function seedTasks(assessmentId: string): PhotoTask[] {
     instruction: seed.instruction,
     tips: seed.tips,
     order: index,
-    status: DEMO_COMPLETED_SLUGS.includes(seed.slug)
-      ? ("done" as TaskStatus)
-      : ("pending" as TaskStatus),
+    status:
+      demoStaging && DEMO_COMPLETED_SLUGS.includes(seed.slug)
+        ? ("done" as TaskStatus)
+        : ("pending" as TaskStatus),
     followUpPrompt: null,
   }));
 }
@@ -133,7 +139,9 @@ async function syncTasksToSeeds(records: Records, assessmentId: string) {
     };
   }
 
-  for (const task of seedTasks(assessmentId)) {
+  // A task added to the content file after this assessment opened starts
+  // pending, whatever the demo staging said when it was first seeded.
+  for (const task of seedTasks(assessmentId, false)) {
     if (!records.tasks[task.id]) records.tasks[task.id] = task;
   }
 }
@@ -179,7 +187,9 @@ export const browserRepository: InspectionRepository = {
       updatedAt: timestamp,
     };
     records.assessments[assessment.id] = assessment;
-    for (const task of seedTasks(assessment.id)) records.tasks[task.id] = task;
+    for (const task of seedTasks(assessment.id, seed.demoStaging ?? false)) {
+      records.tasks[task.id] = task;
+    }
     writeRecords(records);
     return assessment;
   },

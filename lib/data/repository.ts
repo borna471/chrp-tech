@@ -15,6 +15,12 @@ export type AssessmentSeed = {
   policyRef: string;
   homeAddress: string;
   homeownerFirstName: string;
+  /**
+   * Opens the demo part-way through, with three items already marked done.
+   * False for anything reached through an invite link — progress with no photos
+   * behind it makes the insurer's copy of the assessment look wrong.
+   */
+  demoStaging?: boolean;
 };
 
 export type SaveCaptureInput = {

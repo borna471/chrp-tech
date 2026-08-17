@@ -1,19 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { getActiveSeed } from "@/lib/activeAssessment";
 import { getRepository } from "@/lib/data";
 import type { Assessment, PhotoTask } from "@/lib/data/types";
-import { demoConfig } from "@/lib/demoConfig";
 import type { RowState } from "@/lib/taskStatus";
 
 export type AssessmentView = ReturnType<typeof useAssessment>["view"];
 
-const seed = () => ({
-  id: demoConfig.assessmentId,
-  policyRef: demoConfig.policyRef,
-  homeAddress: demoConfig.homeAddress,
-  homeownerFirstName: demoConfig.homeownerFirstName,
-});
+// Whichever assessment this browser was invited into, falling back to the demo.
+const seed = getActiveSeed;
 
 /**
  * The assessment as the dashboard, onboarding and confirmation pages see it:
@@ -55,7 +51,7 @@ export function useAssessment() {
 
   const startOver = useCallback(async () => {
     const repository = getRepository();
-    await repository.resetAssessment(demoConfig.assessmentId);
+    await repository.resetAssessment(seed().id);
     const reopened = await repository.openAssessment(seed());
     setAssessment(reopened);
     setTasks(await repository.listTasks(reopened.id));
@@ -70,8 +66,10 @@ export function useAssessment() {
     const skipped = tasks.find((task) => task.status === "skipped") ?? null;
 
     return {
-      firstName: assessment?.homeownerFirstName ?? demoConfig.homeownerFirstName,
-      homeAddress: assessment?.homeAddress ?? demoConfig.homeAddress,
+      // The seed stands in until the record loads, so an invited homeowner never
+      // sees the demo's name and address flash on screen first.
+      firstName: assessment?.homeownerFirstName ?? seed().homeownerFirstName,
+      homeAddress: assessment?.homeAddress ?? seed().homeAddress,
 
       doneCount,
       totalCount: total,

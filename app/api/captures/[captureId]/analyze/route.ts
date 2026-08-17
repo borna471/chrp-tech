@@ -13,6 +13,14 @@ import { seedForSlug } from "@/lib/tasks";
 
 export const runtime = "nodejs";
 
+/**
+ * A 4B reading a 2048px frame measured 12–14s, which is longer than the function
+ * limits this app was written against. Pinned just above `UPSTREAM_TIMEOUT_MS` so
+ * the route's own timeout is what fails, with a message a homeowner can act on,
+ * rather than the platform killing the request first.
+ */
+export const maxDuration = 60;
+
 /** Long enough for a 4B to read a 2048px frame, short enough to fail visibly. */
 const UPSTREAM_TIMEOUT_MS = 45_000;
 
