@@ -2,12 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { analyzePhoto } from "@/lib/ai/analyzePhoto";
+import {
+  analyzePhoto,
+  logAnalysis,
+  logAnalysisFailure,
+} from "@/lib/ai/analyzePhoto";
+import { isTooBlurry } from "@/lib/ai/blur";
+import { decide } from "@/lib/ai/decide";
+import type { Decision } from "@/lib/ai/decide";
 import type { AnalyzePhotoResult } from "@/lib/ai/types";
 import { getRepository } from "@/lib/data";
 import type { Assessment, PhotoCapture, PhotoTask } from "@/lib/data/types";
 import { demoConfig } from "@/lib/demoConfig";
-import { FOLLOW_UP_TIPS } from "@/lib/tasks";
+import { FOLLOW_UP_TIPS, seedForSlug } from "@/lib/tasks";
+import type { TaskSeed } from "@/lib/tasks";
 
 export type Phase = "instruct" | "analyzing" | "result" | "error";
 
@@ -35,6 +43,7 @@ export function useCapture(slug: string) {
   const [phase, setPhase] = useState<Phase>("instruct");
   const [capture, setCapture] = useState<PhotoCapture | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [decision, setDecision] = useState<Decision | null>(null);
   const [result, setResult] = useState<AnalyzePhotoResult | null>(null);
   const [savedPhotoUrl, setSavedPhotoUrl] = useState<string | null>(null);
 
@@ -87,6 +96,7 @@ export function useCapture(slug: string) {
     });
     setCapture(null);
     setResult(null);
+    setDecision(null);
   }, []);
 
   // The photo already on file for this task, so a homeowner returning to it
@@ -111,48 +121,113 @@ export function useCapture(slug: string) {
     };
   }, [current, phase]);
 
+  /** Persists the reviewer's observations plus what we did with them. */
+  const commit = useCallback(
+    async (
+      task: PhotoTask,
+      seed: TaskSeed,
+      saved: PhotoCapture,
+      analysis: AnalyzePhotoResult,
+      chosen: Decision,
+    ) => {
+      const repository = getRepository();
+      const severityOf = (checkId: string) =>
+        seed.checks.find((check) => check.id === checkId)?.severity ?? "advisory";
+
+      await repository.saveAnalysis(saved.id, {
+        action: chosen.action,
+        message: chosen.message,
+        reason: chosen.action === "retake" ? chosen.reason : null,
+        quality: analysis.quality,
+        elements: analysis.elements,
+        findings: analysis.findings.map((finding) => ({
+          ...finding,
+          severity: severityOf(finding.checkId),
+        })),
+        needsHumanReview:
+          chosen.action === "accepted" ? chosen.needsHumanReview : false,
+        model: analysis.model,
+        elapsedMs: analysis.elapsedMs,
+      });
+
+      // A close-up marks the task as awaiting one, which is what makes the next
+      // shot render — and be judged — as a close-up rather than a fresh attempt.
+      if (chosen.action === "close_up") {
+        const updated = await repository.setFollowUpPrompt(
+          task.id,
+          chosen.message,
+        );
+        setTasks((previous) =>
+          previous.map((item) => (item.id === updated.id ? updated : item)),
+        );
+      }
+
+      setResult(analysis);
+      setDecision(chosen);
+      setPhase("result");
+    },
+    [],
+  );
+
   const runAnalysis = useCallback(
     async (task: PhotoTask, saved: PhotoCapture, blob: Blob | null) => {
-      const repository = getRepository();
+      const seed = seedForSlug(task.slug);
+      if (!seed) {
+        setPhase("error");
+        return;
+      }
       const isFollowUp = task.followUpPrompt !== null;
+      const attempt = (await getRepository().listCaptures(task.id)).length;
+
       try {
+        // The blur gate runs first so an obviously soft photo costs nothing: no
+        // model call, and the homeowner hears back immediately rather than after
+        // a round trip. A capture with no bytes is the demo's stand-in and skips it.
+        if (blob && (await isTooBlurry(blob))) {
+          const blurred: AnalyzePhotoResult = {
+            quality: {
+              blur: 1,
+              framing: "ok",
+              exposure: "ok",
+              subjectPresent: true,
+            },
+            elements: [],
+            findings: [],
+            model: "client:laplacian",
+            elapsedMs: 0,
+          };
+          const chosen = decide(blurred, seed, attempt);
+          logAnalysis(seed, attempt, blurred, chosen);
+          await commit(task, seed, saved, blurred, chosen);
+          return;
+        }
+
         const analysis = await analyzePhoto({
           captureId: saved.id,
-          taskSlug: task.slug,
-          taskName: task.name,
-          zone: task.zone,
-          instruction: task.instruction,
+          task: seed,
           isFollowUp,
           blob,
         });
-        // The demo switch never suppresses a real reviewer verdict — it only
-        // exists so the flow can be walked without the close-up detour.
-        const effective: AnalyzePhotoResult =
-          analysis.verdict === "follow_up" && !demoConfig.aiFollowUps
-            ? {
-                ...analysis,
-                verdict: "accepted",
-                message: `Clear shot. Everything we needed for ${task.name.toLowerCase()} is visible.`,
-              }
-            : analysis;
 
-        await repository.saveAnalysis(saved.id, effective);
-        if (effective.verdict === "follow_up") {
-          const updated = await repository.setFollowUpPrompt(
-            task.id,
-            effective.message,
-          );
-          setTasks((previous) =>
-            previous.map((item) => (item.id === updated.id ? updated : item)),
-          );
+        let chosen = decide(analysis, seed, attempt);
+        // The demo switch never suppresses a retake or a finding — it only skips
+        // the close-up detour so the flow can be walked straight through.
+        if (chosen.action === "close_up" && !demoConfig.aiFollowUps) {
+          chosen = {
+            action: "accepted",
+            message: `Clear shot. Everything we needed for ${task.name.toLowerCase()} is visible.`,
+            needsHumanReview: false,
+          };
         }
-        setResult(effective);
-        setPhase("result");
-      } catch {
+
+        logAnalysis(seed, attempt, analysis, chosen);
+        await commit(task, seed, saved, analysis, chosen);
+      } catch (error) {
+        logAnalysisFailure(seed, attempt, error);
         setPhase("error");
       }
     },
-    [],
+    [commit],
   );
 
   const shoot = useCallback(
@@ -246,14 +321,15 @@ export function useCapture(slug: string) {
 
   const advance = useCallback(async () => {
     if (!current) return;
-    if (result?.verdict === "follow_up") {
-      // Same task again, this time as the close-up the reviewer asked for.
+    // A close-up or a retake both mean shooting this task again — the task is
+    // only settled once the photo was accepted.
+    if (decision && decision.action !== "accepted") {
       clearPhoto();
       setPhase("instruct");
       return;
     }
     await settle("done");
-  }, [clearPhoto, current, result, settle]);
+  }, [clearPhoto, current, decision, settle]);
 
   const skipTask = useCallback(() => settle("skipped"), [settle]);
 
@@ -292,6 +368,7 @@ export function useCapture(slug: string) {
     ready: hydrated && current !== null,
     phase,
     view,
+    decision,
     result,
     photoUrl,
     savedPhotoUrl,

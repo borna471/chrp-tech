@@ -1,10 +1,12 @@
+import type { ElementObservation, PhotoQuality } from "@/lib/ai/types";
 import type {
   Assessment,
   AssessmentStatus,
-  AnalysisVerdict,
+  AnalysisAction,
   PhotoAnalysis,
   PhotoCapture,
   PhotoTask,
+  StoredFinding,
   TaskStatus,
 } from "./types";
 
@@ -24,9 +26,15 @@ export type SaveCaptureInput = {
 };
 
 export type SaveAnalysisInput = {
-  verdict: AnalysisVerdict;
+  action: AnalysisAction;
   message: string;
+  reason: string | null;
+  quality: PhotoQuality;
+  elements: ElementObservation[];
+  findings: StoredFinding[];
+  needsHumanReview: boolean;
   model: string;
+  elapsedMs: number;
 };
 
 /**
@@ -50,6 +58,8 @@ export interface InspectionRepository {
 
   saveCapture(input: SaveCaptureInput): Promise<PhotoCapture>;
   getLatestCapture(taskId: string): Promise<PhotoCapture | null>;
+  /** Oldest first. Its length is the attempt count the retake cap counts against. */
+  listCaptures(taskId: string): Promise<PhotoCapture[]>;
   getCaptureBlob(storageKey: string): Promise<Blob | null>;
 
   saveAnalysis(

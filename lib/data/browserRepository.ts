@@ -261,12 +261,15 @@ export const browserRepository: InspectionRepository = {
     return capture;
   },
 
-  async getLatestCapture(id: string): Promise<PhotoCapture | null> {
+  async listCaptures(id: string): Promise<PhotoCapture[]> {
     const records = readRecords();
-    const captures = Object.values(records.captures)
+    return Object.values(records.captures)
       .filter((capture) => capture.taskId === id)
       .sort((a, b) => a.capturedAt.localeCompare(b.capturedAt));
-    return captures.at(-1) ?? null;
+  },
+
+  async getLatestCapture(id: string): Promise<PhotoCapture | null> {
+    return (await browserRepository.listCaptures(id)).at(-1) ?? null;
   },
 
   async getCaptureBlob(storageKey: string): Promise<Blob | null> {
@@ -287,9 +290,7 @@ export const browserRepository: InspectionRepository = {
     const analysis: PhotoAnalysis = {
       id: newId(),
       captureId,
-      verdict: input.verdict,
-      message: input.message,
-      model: input.model,
+      ...input,
       analyzedAt: now(),
     };
     records.analyses[analysis.id] = analysis;

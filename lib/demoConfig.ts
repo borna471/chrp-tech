@@ -12,6 +12,15 @@ export const demoConfig = {
    * flow without the reviewer ever asking for a close-up.
    */
   aiFollowUps: true,
+  /**
+   * Testing only. Shows the reviewer's raw observations and findings under the
+   * result card so model behaviour can be judged without opening DevTools.
+   *
+   * MUST be false before any real homeowner uses this. Findings are the
+   * insurer's to interpret — an 8B model asserting "water damage" to a
+   * policyholder is a claim implication it should not be making unsupervised.
+   */
+  showAnalysisDebug: true,
 } as const;
 
 export const SUPPORT_EMAIL = "inspectionsupport@chrptech.com";

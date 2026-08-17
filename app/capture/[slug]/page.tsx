@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { AnalysisDebug } from "@/components/AnalysisDebug";
 import { Button } from "@/components/Button";
+import { demoConfig } from "@/lib/demoConfig";
+import { seedForSlug } from "@/lib/tasks";
 import {
   CAPTURE_STATUS_LABEL,
   MARK,
@@ -26,6 +29,7 @@ export default function CapturePage() {
     ready,
     phase,
     view,
+    decision,
     result,
     photoUrl,
     savedPhotoUrl,
@@ -204,19 +208,30 @@ export default function CapturePage() {
             </div>
           )}
 
-          {phase === "result" && result && (
-            <div
-              className={`rounded-lg px-4 py-3.5 ${result.verdict === "accepted" ? "bg-surface" : "bg-aqua-200"}`}
-            >
-              <div className="mb-1.5 text-[10px] font-semibold tracking-[.14em] text-aqua-700 uppercase">
-                {result.verdict === "accepted"
-                  ? "Accepted"
-                  : "One more photo needed"}
+          {phase === "result" && decision && (
+            <>
+              <div
+                className={`rounded-lg px-4 py-3.5 ${decision.action === "accepted" ? "bg-surface" : "bg-aqua-200"}`}
+              >
+                <div className="mb-1.5 text-[10px] font-semibold tracking-[.14em] text-aqua-700 uppercase">
+                  {decision.action === "accepted"
+                    ? "Accepted"
+                    : decision.action === "close_up"
+                      ? "One more photo needed"
+                      : "Let's try that again"}
+                </div>
+                <div className="text-[17px] leading-[1.4] text-pretty">
+                  {decision.message}
+                </div>
               </div>
-              <div className="text-[17px] leading-[1.4] text-pretty">
-                {result.message}
-              </div>
-            </div>
+              {demoConfig.showAnalysisDebug && result && (
+                <AnalysisDebug
+                  result={result}
+                  decision={decision}
+                  task={seedForSlug(slug)}
+                />
+              )}
+            </>
           )}
         </div>
       )}
@@ -244,7 +259,7 @@ export default function CapturePage() {
             </Button>
           </>
         )}
-        {phase === "result" && result && (
+        {phase === "result" && decision && (
           <>
             <Button
               variant="primary"
@@ -252,18 +267,33 @@ export default function CapturePage() {
               onClick={() => void advance()}
               className="min-h-[54px] p-4 text-[17px] font-semibold"
             >
-              {result.verdict === "follow_up"
+              {decision.action === "close_up"
                 ? "Take the close-up"
-                : "Next photo"}
+                : decision.action === "retake"
+                  ? "Retake photo"
+                  : "Next photo"}
             </Button>
-            <Button
-              variant="ghost"
-              block
-              onClick={retake}
-              className="min-h-[44px] text-sm"
-            >
-              Retake this photo
-            </Button>
+            {/* A retake's primary button already retakes — offering it twice
+                reads as two different options. Skipping is the real alternative. */}
+            {decision.action === "retake" ? (
+              <Button
+                variant="ghost"
+                block
+                onClick={() => void skipTask()}
+                className="min-h-[44px] text-sm"
+              >
+                Skip for now
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                block
+                onClick={retake}
+                className="min-h-[44px] text-sm"
+              >
+                Retake this photo
+              </Button>
+            )}
           </>
         )}
         {phase === "error" && (

@@ -32,9 +32,28 @@ enum TaskStatus {
   skipped
 }
 
-enum AnalysisVerdict {
+enum AnalysisAction {
   accepted
-  follow_up
+  retake
+  close_up
+}
+
+enum Framing {
+  too_close
+  ok
+  too_far
+}
+
+enum Exposure {
+  too_dark
+  ok
+  blown_out
+}
+
+enum Severity {
+  advisory
+  attention
+  urgent
 }
 
 model Assessment {
@@ -92,13 +111,67 @@ model PhotoCapture {
 }
 
 model PhotoAnalysis {
-  id         String          @id @default(uuid())
-  captureId  String          @unique
-  verdict    AnalysisVerdict
-  message    String
-  // Which reviewer produced this — "mock" until the vision model is wired in.
-  model      String
-  analyzedAt DateTime        @default(now())
+  id        String         @id @default(uuid())
+  captureId String         @unique
+  // What the app did with the photo, decided by lib/ai/decide.ts.
+  action    AnalysisAction
+  // Homeowner-facing copy, shown verbatim in the result card.
+  message   String
+  // Why a retake was asked for, when one was.
+  reason    String?
 
-  capture PhotoCapture @relation(fields: [captureId], references: [id], onDelete: Cascade)
+  // Is the photo usable at all — the same four questions on every task.
+  blur           Float
+  framing        Framing
+  exposure       Exposure
+  subjectPresent Boolean
+
+  // Set when the attempt cap was hit; a person should look at this one.
+  needsHumanReview Boolean  @default(false)
+  // Which reviewer produced this — "mock" until the vision model is wired in.
+  model            String
+  elapsedMs        Int
+  analyzedAt       DateTime @default(now())
+
+  capture  PhotoCapture       @relation(fields: [captureId], references: [id], onDelete: Cascade)
+  elements PhotoElementCheck[]
+  findings PhotoFinding[]
+
+  @@index([needsHumanReview])
+}
+
+// Whether each of the task's requiredElements was in frame. Drives retakes, and
+// tells us which instructions homeowners routinely fail to satisfy.
+model PhotoElementCheck {
+  id         String  @id @default(uuid())
+  analysisId String
+  elementId  String
+  visible    Boolean
+  confidence Float
+
+  analysis PhotoAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, elementId])
+}
+
+// What the reviewer found. This is the table the insurer actually queries —
+// "every open assessment with an urgent water finding" is the whole point of the
+// product, hence its own table rather than a JSON column, and the index below.
+model PhotoFinding {
+  id         String   @id @default(uuid())
+  analysisId String
+  // Matches a check id in content/photo-tasks.json. Stable across assessments so
+  // findings can be counted across the whole book.
+  checkId    String
+  present    Boolean
+  confidence Float
+  // The reviewer's own words. Internal to the assessment team.
+  note       String
+  severity   Severity
+
+  analysis PhotoAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, checkId])
+  @@index([checkId, present])
+  @@index([severity, present])
 }
