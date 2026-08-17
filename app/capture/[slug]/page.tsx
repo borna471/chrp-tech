@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/Button";
+import {
+  CAPTURE_STATUS_LABEL,
+  MARK,
+  MARK_CLASS,
+  STATUS_CLASS,
+} from "@/lib/taskStatus";
 import { useCapture } from "@/lib/useCapture";
 
 /** The newsprint-ish diagonal fill that stands in for a photograph. */
@@ -80,6 +86,19 @@ export default function CapturePage() {
           <h1 className="mb-3 text-[30px] leading-[1.15] font-semibold">
             {view.currentName}
           </h1>
+          <div className="mb-3.5 inline-flex items-center gap-2 rounded-full bg-surface py-1.5 pr-3.5 pl-1.5">
+            <span
+              className={`flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] text-xs font-semibold ${MARK_CLASS[view.status]}`}
+              aria-hidden="true"
+            >
+              {MARK[view.status]}
+            </span>
+            <span
+              className={`text-[11px] tracking-[.08em] uppercase ${STATUS_CLASS[view.status] || "text-steel-600"}`}
+            >
+              {CAPTURE_STATUS_LABEL[view.status]}
+            </span>
+          </div>
           <p className="mb-5 text-[17px] leading-[1.45] text-pretty text-accent-800">
             {view.currentInstruction}
           </p>

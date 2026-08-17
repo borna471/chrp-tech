@@ -6,36 +6,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/Button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/demoConfig";
+import { MARK, MARK_CLASS, STATUS_CLASS, STATUS_LABEL } from "@/lib/taskStatus";
 import { useAssessment } from "@/lib/useAssessment";
-import type { RowState } from "@/lib/useAssessment";
-
-const MARK: Record<RowState, string> = {
-  done: "✓",
-  skipped: "!",
-  next: "",
-  pending: "",
-};
-
-const MARK_CLASS: Record<RowState, string> = {
-  done: "border-accent bg-accent text-white",
-  skipped: "border-aqua text-aqua-700",
-  next: "border-steel-400",
-  pending: "border-steel-400",
-};
-
-const STATUS_LABEL: Record<RowState, string> = {
-  done: "Done",
-  skipped: "Skipped",
-  next: "Next",
-  pending: "",
-};
-
-const STATUS_CLASS: Record<RowState, string> = {
-  done: "text-steel-500 font-normal",
-  skipped: "text-aqua-700 font-semibold",
-  next: "text-accent-700 font-semibold",
-  pending: "",
-};
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -108,31 +80,33 @@ export default function DashboardPage() {
 
         <ul>
           {view.rows.map((row) => (
-            <li
-              key={row.id}
-              className="mb-2 flex items-center gap-[13px] rounded-lg bg-surface px-3.5 py-3"
-            >
-              <div
-                className={`flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full border-[1.5px] text-sm font-semibold ${MARK_CLASS[row.state]}`}
-                aria-hidden="true"
+            <li key={row.id}>
+              <Link
+                href={`/capture/${row.slug}`}
+                className="mb-2 flex items-center gap-[13px] rounded-lg bg-surface px-3.5 py-3 hover:bg-aqua-200"
               >
-                {MARK[row.state]}
-              </div>
-              <div className="min-w-0 flex-1">
                 <div
-                  className={`text-base leading-[1.25] font-medium ${row.state === "done" ? "text-steel-600" : "text-ink"}`}
+                  className={`flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full border-[1.5px] text-sm font-semibold ${MARK_CLASS[row.state]}`}
+                  aria-hidden="true"
                 >
-                  {row.name}
+                  {MARK[row.state]}
                 </div>
-                <div className="mt-[3px] text-[10px] tracking-[.1em] text-steel-600 uppercase">
-                  {row.zone}
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={`text-base leading-[1.25] font-medium ${row.state === "done" ? "text-steel-600" : "text-ink"}`}
+                  >
+                    {row.name}
+                  </div>
+                  <div className="mt-[3px] text-[10px] tracking-[.1em] text-steel-600 uppercase">
+                    {row.zone}
+                  </div>
                 </div>
-              </div>
-              <div
-                className={`flex-none text-[11px] tracking-[.08em] uppercase ${STATUS_CLASS[row.state]}`}
-              >
-                {STATUS_LABEL[row.state]}
-              </div>
+                <div
+                  className={`flex-none text-[11px] tracking-[.08em] uppercase ${STATUS_CLASS[row.state]}`}
+                >
+                  {STATUS_LABEL[row.state]}
+                </div>
+              </Link>
             </li>
           ))}
         </ul>

@@ -4,8 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getRepository } from "@/lib/data";
 import type { Assessment, PhotoTask } from "@/lib/data/types";
 import { demoConfig } from "@/lib/demoConfig";
-
-export type RowState = "done" | "skipped" | "next" | "pending";
+import type { RowState } from "@/lib/taskStatus";
 
 export type AssessmentView = ReturnType<typeof useAssessment>["view"];
 
@@ -95,6 +94,7 @@ export function useAssessment() {
 
       rows: tasks.map((task, index) => ({
         id: task.id,
+        slug: task.slug,
         name: task.name,
         zone: `${task.zone} · ${task.risk}`,
         state: (task.status === "done"

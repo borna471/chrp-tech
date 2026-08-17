@@ -265,6 +265,8 @@ export function useCapture(slug: string) {
     return {
       progressPct: total === 0 ? 0 : Math.round((doneCount / total) * 100),
       stepLabel: `Photo ${(current?.order ?? 0) + 1} of ${total}`,
+      // Mirrors the row this photo has in the dashboard's list.
+      status: current?.status ?? "pending",
       currentName: current
         ? isFollowUpShot
           ? `${current.name} — close-up`
