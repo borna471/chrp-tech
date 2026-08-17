@@ -2,29 +2,29 @@ import type { TaskCheck, TaskSeed } from "@/lib/tasks";
 import type { AnalyzePhotoResult } from "./types";
 
 /**
- * The one place a capture's outcome is chosen.
+ * Where the flow decides what a photo shows and what to do with it.
  *
- * The reviewer reports observations; this turns them into an action. Keeping the
- * decision here rather than asking the model for a verdict means the behaviour
- * can be read at a glance, tuned by changing a number, and exercised without a
- * model call — which matters with a small model whose verdicts would otherwise
- * be an opaque, untunable black box.
+ * The reviewer reports observations; this logic decides what to do with them.
  */
 
-/** Every threshold in one place. Tuning against real photos happens here. */
+/** Every threshold in one place. */
 export const THRESHOLDS = {
   /** Above this, the photo is too soft to review. */
   blurMax: 0.55,
-  /** How sure the reviewer must be before a missing element forces a retake. */
-  missingElementConfidence: 0.6,
+  /**
+   * Confidence is how likely the thing is to be *present*, so an element the
+   * reviewer cannot find scores low, not high. At or below this, we believe it
+   * is genuinely out of frame and ask for a retake.
+   */
+  missingElementConfidence: 0.4,
   /**
    * A finding inside this band is a maybe: enough to be worth a closer look,
-   * not enough to record as seen. Outside it we either believe it or we don't.
+   * not enough to record as seen. Outside it we either believe it or not.
    */
   uncertainFinding: { min: 0.35, max: 0.75 },
   /**
    * After this many attempts the photo is accepted regardless and flagged for a
-   * person. A homeowner must never be trapped in a retake loop by a model error.
+   * person. A homeowner must never be trapped in a retake loop by a model failure.
    */
   maxAttempts: 2,
 } as const;
@@ -55,9 +55,15 @@ const retake = (reason: RetakeReason, message: string): Decision => ({
   message,
 });
 
-/** Rules 1–4: the photo itself, before anything in it is considered. */
-function judgeQuality(result: AnalyzePhotoResult): Decision | null {
-  const { blur, exposure, framing } = result.quality;
+/**
+ * Rules 1–3: the photo is unreadable, so nothing in it can be trusted.
+ *
+ * These outrank everything because a soft or badly lit frame makes the
+ * reviewer's own element and finding calls unreliable — there is no point
+ * acting on what it thinks it saw.
+ */
+function judgeLegibility(result: AnalyzePhotoResult): Decision | null {
+  const { blur, exposure } = result.quality;
 
   if (blur > THRESHOLDS.blurMax) {
     return retake(
@@ -77,6 +83,20 @@ function judgeQuality(result: AnalyzePhotoResult): Decision | null {
       "The light has washed that one out. Try again without the flash pointing straight at it.",
     );
   }
+  return null;
+}
+
+/**
+ * Rules 6–7: the photo is readable and shows the right thing, but not enough of it.
+ *
+ * Deliberately ranked below the subject check. Framing and subject go wrong
+ * together — a photo of the wrong room reads as "too_close" as well — and
+ * "step back" is useless advice to someone who photographed the wrong room.
+ * Whichever fires, the more specific instruction has to be the one they get.
+ */
+function judgeFraming(result: AnalyzePhotoResult): Decision | null {
+  const { framing } = result.quality;
+
   if (framing === "too_close") {
     return retake(
       "too_close",
@@ -92,7 +112,7 @@ function judgeQuality(result: AnalyzePhotoResult): Decision | null {
   return null;
 }
 
-/** Rule 5: is what we asked for actually in the frame? */
+/** Rules 4–5: is what we asked for actually in the frame? */
 function judgeSubject(
   result: AnalyzePhotoResult,
   task: TaskSeed,
@@ -104,10 +124,14 @@ function judgeSubject(
     );
   }
 
+  // Both halves have to agree before a homeowner is sent back: the reviewer said
+  // it is not in frame, and it scored low enough that we believe the negative.
+  // A "not visible" carrying high presence confidence is the reviewer
+  // contradicting itself, and is not worth a retake.
   const missing = result.elements.find(
     (element) =>
       !element.visible &&
-      element.confidence >= THRESHOLDS.missingElementConfidence,
+      element.confidence <= THRESHOLDS.missingElementConfidence,
   );
   if (!missing) return null;
 
@@ -124,7 +148,7 @@ function judgeSubject(
   );
 }
 
-/** Rule 6: a maybe worth a second, closer photo. */
+/** Rule 8: a maybe worth a second, closer photo. */
 function judgeFindings(
   result: AnalyzePhotoResult,
   checksById: Map<string, TaskCheck>,
@@ -168,8 +192,9 @@ export function decide(
   const checksById = new Map(task.checks.map((check) => [check.id, check]));
 
   return (
-    judgeQuality(result) ??
+    judgeLegibility(result) ??
     judgeSubject(result, task) ??
+    judgeFraming(result) ??
     judgeFindings(result, checksById) ??
     ACCEPTED(task.name)
   );

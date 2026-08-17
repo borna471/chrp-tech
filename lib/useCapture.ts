@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  AnalysisError,
   analyzePhoto,
   logAnalysis,
   logAnalysisFailure,
@@ -22,16 +23,7 @@ export type Phase = "instruct" | "analyzing" | "result" | "error";
 export type CaptureView = ReturnType<typeof useCapture>["view"];
 
 /**
- * How long to wait after opening the camera before standing in a photo. On a
- * desktop the file picker may never return anything, and the demo has to keep
- * moving; a real capture arriving first cancels this.
- */
-const DEMO_AUTO_SHOT_MS = 900;
-
-/**
- * One photo task, addressed by its slug in the URL. Owns everything about
- * capturing and reviewing that one shot; when the task is settled it hands the
- * homeowner on to the next slug, or back to the dashboard when none is left.
+ * capturing and calling photo reviewers. Moves to next task or back to dashboard.
  */
 export function useCapture(slug: string) {
   const router = useRouter();
@@ -46,13 +38,8 @@ export function useCapture(slug: string) {
   const [decision, setDecision] = useState<Decision | null>(null);
   const [result, setResult] = useState<AnalyzePhotoResult | null>(null);
   const [savedPhotoUrl, setSavedPhotoUrl] = useState<string | null>(null);
-
-  const autoShotTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const phaseRef = useRef(phase);
-
-  useEffect(() => {
-    phaseRef.current = phase;
-  }, [phase]);
+  /** Why the review failed, when the reason is worth saying out loud. Used for debugging. */
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,13 +62,6 @@ export function useCapture(slug: string) {
     };
   }, []);
 
-  useEffect(
-    () => () => {
-      if (autoShotTimer.current) clearTimeout(autoShotTimer.current);
-    },
-    [],
-  );
-
   const current = tasks.find((task) => task.slug === slug) ?? null;
 
   // A slug that names no task is a dead link — send them back to the list.
@@ -97,6 +77,7 @@ export function useCapture(slug: string) {
     setCapture(null);
     setResult(null);
     setDecision(null);
+    setErrorMessage(null);
   }, []);
 
   // The photo already on file for this task, so a homeowner returning to it
@@ -223,7 +204,17 @@ export function useCapture(slug: string) {
         logAnalysis(seed, attempt, analysis, chosen);
         await commit(task, seed, saved, analysis, chosen);
       } catch (error) {
-        logAnalysisFailure(seed, attempt, error);
+        const failure = error instanceof AnalysisError ? error : null;
+        logAnalysisFailure(seed, attempt, error, failure?.raw);
+        // A cold endpoint is a wait rather than a fault, so it is the one
+        // failure a homeowner is told about specifically. Under the debug flag
+        // every failure shows its real reason instead — a misconfigured endpoint
+        // is otherwise indistinguishable from a model that answered badly.
+        setErrorMessage(
+          failure && (failure.warmingUp || demoConfig.showAnalysisDebug)
+            ? failure.message
+            : null,
+        );
         setPhase("error");
       }
     },
@@ -231,16 +222,16 @@ export function useCapture(slug: string) {
   );
 
   const shoot = useCallback(
-    async (blob: Blob | null) => {
-      if (autoShotTimer.current) clearTimeout(autoShotTimer.current);
+    async (blob: Blob) => {
       const task = current;
       if (!task || !assessment) return;
 
       setPhotoUrl((previous) => {
         if (previous) URL.revokeObjectURL(previous);
-        return blob ? URL.createObjectURL(blob) : null;
+        return URL.createObjectURL(blob);
       });
       setResult(null);
+      setErrorMessage(null);
       setPhase("analyzing");
 
       const saved = await getRepository().saveCapture({
@@ -258,24 +249,22 @@ export function useCapture(slug: string) {
   const openCamera = useCallback(() => {
     // A detached input, created per capture: the picker is fire-and-forget, and
     // a fresh element means picking the same file twice in a row still fires.
+    // Nothing happens until a file arrives — on a desktop that means the page
+    // waits on the picker rather than moving on without a photo to review.
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
     input.capture = "environment";
     input.addEventListener("change", () => {
-      if (autoShotTimer.current) clearTimeout(autoShotTimer.current);
-      void shoot(input.files?.[0] ?? null);
+      const file = input.files?.[0];
+      if (file) void shoot(file);
     });
     input.click();
-
-    if (autoShotTimer.current) clearTimeout(autoShotTimer.current);
-    autoShotTimer.current = setTimeout(() => {
-      if (phaseRef.current === "instruct") void shoot(null);
-    }, DEMO_AUTO_SHOT_MS);
   }, [shoot]);
 
   const retryAnalysis = useCallback(async () => {
     if (!current || !capture) return;
+    setErrorMessage(null);
     setPhase("analyzing");
     const blob = capture.storageKey
       ? await getRepository().getCaptureBlob(capture.storageKey)
@@ -370,6 +359,7 @@ export function useCapture(slug: string) {
     view,
     decision,
     result,
+    errorMessage,
     photoUrl,
     savedPhotoUrl,
     openCamera,

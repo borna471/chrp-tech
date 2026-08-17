@@ -1,48 +1,70 @@
 import type { TaskSeed } from "@/lib/tasks";
 import type { Decision } from "./decide";
+import { downscaleForUpload } from "./downscale";
 import type { AnalyzePhotoRequest, AnalyzePhotoResult } from "./types";
 
-/** The model this is built against; sent as the `model` field in the real call. */
+/** sent as the `model` field in the real call. */
 export const TARGET_MODEL = "Qwen/Qwen3-VL-4B-Instruct";
+
+/**
+ * A review that did not produce a result. returns raw response and whether the model is warming up.
+ */
+export class AnalysisError extends Error {
+  readonly raw?: unknown;
+  readonly warmingUp: boolean;
+
+  constructor(
+    message: string,
+    options: { raw?: unknown; warmingUp?: boolean } = {},
+  ) {
+    super(message);
+    this.name = "AnalysisError";
+    this.raw = options.raw;
+    this.warmingUp = options.warmingUp ?? false;
+  }
+}
 
 /**
  * The one place the flow decides what a photo shows.
  *
- * TODO(ai): replace the throw below with the real call. The model must not be
- * reached from the browser — the API key stays server-side — so this becomes:
- *
- *   const body = new FormData();
- *   body.append("photo", input.blob!);
- *   body.append("taskSlug", input.task.slug);
- *   body.append("isFollowUp", String(input.isFollowUp));
- *   const response = await fetch(`/api/captures/${input.captureId}/analyze`, {
- *     method: "POST",
- *     body,
- *   });
- *   if (!response.ok) throw new Error(`Analysis failed: ${response.status}`);
- *   return parseResult(await response.json(), input.task);
- *
- * with a route handler at app/api/captures/[captureId]/analyze/route.ts that
- * posts SYSTEM_PROMPT plus buildUserPrompt(task, isFollowUp) and the image to
- * the OpenAI-compatible endpoint, asking for the JSON shape in `prompt.ts`.
- * Callers already await this and already handle rejection, so nothing outside
- * this file changes — `parseResult` below validates the response before anything
- * downstream trusts it.
+ * The model is reached through our own route rather than directly: the endpoint
+ * credentials stay server-side, and the prompt is assembled there from the task
+ * slug, so nothing about what the reviewer is asked originates in the browser.
  */
 export async function analyzePhoto(
   input: AnalyzePhotoRequest,
 ): Promise<AnalyzePhotoResult> {
-  void input;
-  // Until the route handler lands, every capture resolves to the error card,
-  // whose "Try again" re-runs this. The blur gate still works — it never gets here.
-  throw new Error("analyzePhoto: reviewer not wired up yet — see TODO(ai) above.");
+  if (!input.blob) {
+    throw new AnalysisError("There is no photo on file to review.");
+  }
+
+  const body = new FormData();
+  body.append("photo", await downscaleForUpload(input.blob));
+  body.append("taskSlug", input.task.slug);
+  body.append("isFollowUp", String(input.isFollowUp));
+
+  const response = await fetch(`/api/captures/${input.captureId}/analyze`, {
+    method: "POST",
+    body,
+  });
+
+  const payload = (await response.json().catch(() => null)) as {
+    error?: string;
+    raw?: unknown;
+  } | null;
+
+  if (!response.ok) {
+    throw new AnalysisError(
+      payload?.error ?? `The reviewer answered ${response.status}.`,
+      { raw: payload?.raw, warmingUp: response.status === 503 },
+    );
+  }
+
+  return parseResult(payload, input.task);
 }
 
 /**
- * Validates a reviewer response before anything downstream trusts it. A real
- * model returns text, and a small one will sometimes return text that is nearly
- * the right shape — so this throws rather than coercing, and the caller's error
- * state offers a retry.
+ * Validates a reviewer response
  */
 export function parseResult(raw: unknown, task: TaskSeed): AnalyzePhotoResult {
   if (typeof raw !== "object" || raw === null) {
@@ -73,8 +95,7 @@ export function parseResult(raw: unknown, task: TaskSeed): AnalyzePhotoResult {
     body.elements,
     "elements",
   )
-    // Ids the task doesn't define are dropped rather than trusted — a small model
-    // will occasionally invent one, and it must not reach the decision rules.
+    // filtering elements by ID that are not required for the current task
     .filter((item) => task.requiredElements.some((e) => e.id === item.id))
     .map((item) => ({
       id: item.id,
@@ -117,8 +138,7 @@ export function parseResult(raw: unknown, task: TaskSeed): AnalyzePhotoResult {
 }
 
 /**
- * One collapsed group per capture. Collapsed so a twenty-photo walk stays
- * readable, complete so any single capture can be expanded and copied out whole.
+ * Logs the analysis result
  */
 export function logAnalysis(
   task: TaskSeed,
@@ -151,7 +171,7 @@ export function logAnalysis(
   console.groupEnd();
 }
 
-/** The failure path still logs — a bad response is the thing worth seeing raw. */
+/** Logs the analysis failure */
 export function logAnalysisFailure(
   task: TaskSeed,
   attempt: number,

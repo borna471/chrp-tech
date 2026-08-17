@@ -15,7 +15,7 @@ Rules:
 - Report only what you can see in this image. Never infer from what is usually true of homes like this one.
 - If you cannot see something clearly enough to be sure, say it is not visible. Do not guess.
 - If you think a condition may be present but are not certain, report it as present with a low confidence score. Do not omit it, and do not round it up to certain.
-- Confidence is how sure you are of your own answer, from 0 to 1. Use the middle of the range — most real answers are not 0.1 or 0.95.
+- Confidence is always how likely it is that the thing is there, from 0 to 1 — never how sure you are of your own answer. An element you cannot find scores near 0, not near 1. Use the middle of the range — most real answers are not 0.1 or 0.95.
 - Judge framing against what the instruction asked for. A photo asked to be wide is not "too close" because a detail is large; a photo asked to be a close-up is not "too far" because it fills the frame.
 - Your notes are read by an assessor, not the homeowner. Describe what you see in one short factual sentence.
 
@@ -56,6 +56,73 @@ ${findings}
 }
 
 /**
+ * The same shape as `outputShape`, as a JSON Schema for the endpoint's guided
+ * decoding. vLLM constrains generation to this grammar, which is what makes the
+ * response shape guaranteed rather than requested: an enum cannot come back as
+ * "too close" with a space, and an id cannot be invented, renamed or dropped.
+ *
+ * `outputShape` stays in the prompt as well — the grammar forces the shape, but
+ * seeing the target still helps a small model fill it in sensibly.
+ *
+ * Deliberately limited to objects, arrays, enums, numbers and booleans: that is
+ * the subset the constrained-decoding backend handles without complaint.
+ */
+export function outputSchema(task: TaskSeed) {
+  // A single-value enum is how an id is pinned: the model can only emit this
+  // exact string in this exact position.
+  const fixed = (
+    ids: string[],
+    key: string,
+    extra: Record<string, unknown>,
+  ) => ({
+    type: "array",
+    minItems: ids.length,
+    maxItems: ids.length,
+    // `prefixItems` rather than an `items` array: it is the 2020-12 spelling of
+    // a tuple, and the one the constrained-decoding backend understands.
+    prefixItems: ids.map((id) => ({
+      type: "object",
+      properties: { [key]: { type: "string", enum: [id] }, ...extra },
+      required: [key, ...Object.keys(extra)],
+      additionalProperties: false,
+    })),
+  });
+
+  // No numeric bounds: a grammar cannot enforce a range, and `parseResult`
+  // already clamps to 0–1. Keywords the backend must ignore are worth omitting.
+  const confidence = { type: "number" };
+
+  return {
+    type: "object",
+    properties: {
+      quality: {
+        type: "object",
+        properties: {
+          blur: confidence,
+          framing: { type: "string", enum: ["too_close", "ok", "too_far"] },
+          exposure: { type: "string", enum: ["too_dark", "ok", "blown_out"] },
+          subjectPresent: { type: "boolean" },
+        },
+        required: ["blur", "framing", "exposure", "subjectPresent"],
+        additionalProperties: false,
+      },
+      elements: fixed(
+        task.requiredElements.map((element) => element.id),
+        "id",
+        { visible: { type: "boolean" }, confidence },
+      ),
+      findings: fixed(task.checks.map((check) => check.id), "checkId", {
+        present: { type: "boolean" },
+        confidence,
+        note: { type: "string" },
+      }),
+    },
+    required: ["quality", "elements", "findings"],
+    additionalProperties: false,
+  };
+}
+
+/**
  * The per-photo half of the prompt. On a follow-up the framing guidance is
  * inverted — otherwise the reviewer marks a requested close-up "too_close" and
  * the homeowner is sent round in a circle.
@@ -69,7 +136,7 @@ export function buildUserPrompt(task: TaskSeed, isFollowUp: boolean): string {
 
 ${QUALITY_BLOCK}
 
-Required elements — for each, is it visible in this frame?
+Required elements — for each, is it visible in this frame? Confidence is how likely it is to be present, so score one you cannot find near 0.
 ${numbered(
   task.requiredElements.map((element) => ({
     id: element.id,

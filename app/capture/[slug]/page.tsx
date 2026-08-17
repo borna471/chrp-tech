@@ -31,6 +31,7 @@ export default function CapturePage() {
     view,
     decision,
     result,
+    errorMessage,
     photoUrl,
     savedPhotoUrl,
     openCamera,
@@ -202,8 +203,8 @@ export default function CapturePage() {
                 Review didn&apos;t go through
               </div>
               <div className="text-[17px] leading-[1.4] text-pretty">
-                We couldn&apos;t review that photo. Your shot is saved — try
-                again.
+                {errorMessage ??
+                  "We couldn't review that photo. Your shot is saved — try again."}
               </div>
             </div>
           )}
