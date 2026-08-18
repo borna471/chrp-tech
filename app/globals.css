@@ -19,6 +19,11 @@
   --color-aqua-200: #dff5f5;
   --color-aqua-700: #0f7d80;
 
+  /* Failure only. Aqua carries everything the homeowner can simply continue
+     past, so red has to stay rare enough to still mean "this one did not pass". */
+  --color-alert-200: #fdeceb;
+  --color-alert-700: #b3261e;
+
   --color-steel-200: #eef2f4;
   --color-steel-300: #dbe3e7;
   --color-steel-400: #b6c4cb;

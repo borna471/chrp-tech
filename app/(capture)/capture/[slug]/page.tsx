@@ -23,6 +23,25 @@ const DEMO_PHOTO =
 /** Tried in order until one loads; missing files fall back to EXAMPLE_FRAME. */
 const EXAMPLE_EXTENSIONS = ["webp", "jpeg", "jpg"] as const;
 
+/**
+ * How each verdict is dressed. A retake is the only one the homeowner cannot
+ * move on from, so it is the only one in red — a close-up request is still
+ * progress, and colouring it the same way would blunt the signal.
+ */
+const DECISION_STYLE = {
+  accepted: { card: "bg-surface", eyebrow: "text-aqua-700", label: "Accepted" },
+  close_up: {
+    card: "bg-aqua-200",
+    eyebrow: "text-aqua-700",
+    label: "One more photo needed",
+  },
+  retake: {
+    card: "bg-alert-200",
+    eyebrow: "text-alert-700",
+    label: "Let's try that again",
+  },
+} as const;
+
 export default function CapturePage() {
   const { slug } = useParams<{ slug: string }>();
   const {
@@ -212,14 +231,12 @@ export default function CapturePage() {
           {phase === "result" && decision && (
             <>
               <div
-                className={`rounded-lg px-4 py-3.5 ${decision.action === "accepted" ? "bg-surface" : "bg-aqua-200"}`}
+                className={`rounded-lg px-4 py-3.5 ${DECISION_STYLE[decision.action].card}`}
               >
-                <div className="mb-1.5 text-[10px] font-semibold tracking-[.14em] text-aqua-700 uppercase">
-                  {decision.action === "accepted"
-                    ? "Accepted"
-                    : decision.action === "close_up"
-                      ? "One more photo needed"
-                      : "Let's try that again"}
+                <div
+                  className={`mb-1.5 text-[10px] font-semibold tracking-[.14em] uppercase ${DECISION_STYLE[decision.action].eyebrow}`}
+                >
+                  {DECISION_STYLE[decision.action].label}
                 </div>
                 <div className="text-[17px] leading-[1.4] text-pretty">
                   {decision.message}
