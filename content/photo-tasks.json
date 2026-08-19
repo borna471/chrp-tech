@@ -13,6 +13,7 @@
       "The downslope, if the lot is graded"
     ],
     "requiredElements": [
+      { "id": "wall-elevation", "description": "A full elevation of the house, from the ground up to the roof edge, with several feet of ground in front of it" },
       { "id": "wall-base", "description": "The base of an exterior wall where it meets the ground" },
       { "id": "adjacent-ground", "description": "The strip of ground immediately against that wall" }
     ],
@@ -46,7 +47,7 @@
       "Debris sitting in the valleys or along the roof edge"
     ],
     "requiredElements": [
-      { "id": "roof-surface", "description": "A section of roof covering — shingles, tiles or metal" },
+      { "id": "roof-surface", "description": "The whole of one roof slope, ridge to eave" },
       { "id": "roof-edge", "description": "The roof edge or eave line" }
     ],
     "checks": [
@@ -118,6 +119,7 @@
       "Firewood, propane tanks or bins stacked against the walls"
     ],
     "requiredElements": [
+      { "id": "deck-extent", "description": "The whole deck or porch, including the ground and the space underneath it" },
       { "id": "deck-structure", "description": "The deck or porch surface" },
       { "id": "house-junction", "description": "Where the deck meets the wall of the house" }
     ],
@@ -235,6 +237,7 @@
       "Any rust, scorching or discoloration"
     ],
     "requiredElements": [
+      { "id": "panel-extent", "description": "The whole panel in one frame: all four edges of the enclosure visible, not just part of the breakers" },
       { "id": "breaker-rows", "description": "The rows of breakers inside the open panel" },
       { "id": "panel-interior", "description": "The interior face of the panel around the breakers" }
     ],
@@ -567,6 +570,7 @@
       "The corners, where movement shows first"
     ],
     "requiredElements": [
+      { "id": "seal-run", "description": "The full run of the joint, corner to corner, with both ends visible" },
       { "id": "seal-line", "description": "The joint where the tub or shower base meets the wall" },
       { "id": "surrounding-surface", "description": "The wall surface or tile immediately above that joint" }
     ],
