@@ -22,6 +22,9 @@ const DEMO_PHOTO =
   "repeating-linear-gradient(115deg,#0d3a4f 0 10px,#154c66 10px 20px)";
 /** Tried in order until one loads; missing files fall back to EXAMPLE_FRAME. */
 const EXAMPLE_EXTENSIONS = ["webp", "jpeg", "jpg"] as const;
+/** Sized by its own aspect ratio, capped so a tall portrait cannot push the
+ *  instructions below the fold. */
+const FRAME_IMAGE_CLASS = "block h-auto max-h-[340px] w-auto max-w-full";
 
 /**
  * How each verdict is dressed. A retake is the only one the homeowner cannot
@@ -80,6 +83,7 @@ export default function CapturePage() {
       ? `/example-frames/${view.currentSlug}.${EXAMPLE_EXTENSIONS[exampleExtIndex]}`
       : null;
   const showExampleImage = !savedPhotoUrl && !!exampleSrc;
+  const hasFramePhoto = !!savedPhotoUrl || showExampleImage;
 
   return (
     <div className="flex flex-1 flex-col overflow-y-auto px-5 pb-6">
@@ -127,13 +131,14 @@ export default function CapturePage() {
             {view.currentInstruction}
           </p>
 
+          {/* The frame hugs whatever it holds: with a photo it takes the
+              image's own aspect ratio (most are portrait), and without one it
+              falls back to a fixed-height placeholder. */}
           <div
-            className="relative mb-5 flex h-[180px] items-end overflow-hidden rounded-lg p-3"
-            style={
-              savedPhotoUrl || showExampleImage
-                ? undefined
-                : { background: EXAMPLE_FRAME }
-            }
+            className={`relative mx-auto mb-5 overflow-hidden rounded-lg ${
+              hasFramePhoto ? "w-fit" : "flex h-[180px] items-end p-3"
+            }`}
+            style={hasFramePhoto ? undefined : { background: EXAMPLE_FRAME }}
           >
             {savedPhotoUrl ? (
               // A blob URL from IndexedDB — next/image cannot optimize it.
@@ -141,7 +146,7 @@ export default function CapturePage() {
               <img
                 src={savedPhotoUrl}
                 alt={`Your saved photo of ${view.currentName}`}
-                className="absolute inset-0 h-full w-full object-cover"
+                className={FRAME_IMAGE_CLASS}
               />
             ) : (
               showExampleImage &&
@@ -152,14 +157,18 @@ export default function CapturePage() {
                   key={exampleSrc}
                   src={exampleSrc}
                   alt={`Example frame for ${view.currentName}`}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className={FRAME_IMAGE_CLASS}
                   onError={() =>
                     setExample({ slug, index: exampleExtIndex + 1 })
                   }
                 />
               )
             )}
-            <span className="relative rounded-full bg-bg px-2 py-[5px] text-[10px] tracking-[.1em] text-steel-700 uppercase">
+            <span
+              className={`rounded-full bg-bg px-2 py-[5px] text-[10px] tracking-[.1em] text-steel-700 uppercase ${
+                hasFramePhoto ? "absolute bottom-3 left-3" : "relative"
+              }`}
+            >
               {savedPhotoUrl ? `Photo on file` : `Example frame`}
             </span>
           </div>
